@@ -13,5 +13,8 @@ require (
 	github.com/FactomProject/btcutilecc v0.0.0-20130527213604-d3a63a5752ec // indirect
 	github.com/dchest/blake512 v1.0.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/mobile v0.0.0-20240401224555-755f4ef71bbd // indirect
+	golang.org/x/mod v0.16.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/tools v0.19.0 // indirect
 )
