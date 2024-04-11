@@ -1,10 +1,14 @@
-package identity
+package identity_test
 
-import "testing"
+import (
+	"testing"
+
+	identity "github.com/rarimo/rarime-mobile-identity-sdk"
+)
 
 func TestMnemonic(t *testing.T) {
 	// Test NewMnemonic
-	mnemonic, err := NewMnemonic()
+	mnemonic, err := identity.NewMnemonic()
 	if err != nil {
 		t.Errorf("NewMnemonic() failed: %v", err)
 	}
@@ -13,7 +17,7 @@ func TestMnemonic(t *testing.T) {
 	}
 
 	// Test SeedFromMnemonic
-	seed, err := SeedFromMnemonic(mnemonic)
+	seed, err := identity.SeedFromMnemonic(mnemonic)
 	if err != nil {
 		t.Errorf("SeedFromMnemonic() failed: %v", err)
 	}
@@ -22,7 +26,7 @@ func TestMnemonic(t *testing.T) {
 	}
 
 	// Test NewSecretKeyFromSeed
-	secretKey, err := NewSecretKeyFromSeed(seed)
+	secretKey, err := identity.NewSecretKeyFromSeed(seed)
 	if err != nil {
 		t.Errorf("NewSecretKeyFromSeed() failed: %v", err)
 	}

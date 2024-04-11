@@ -39,3 +39,9 @@ func NewSecretKeyFromSeed(seed []byte) (string, error) {
 
 	return hex.EncodeToString(secretKey[:]), nil
 }
+
+func NewBJJSecretKey() string {
+	secretKey := babyjub.NewRandPrivKey()
+
+	return hex.EncodeToString(secretKey[:])
+}
