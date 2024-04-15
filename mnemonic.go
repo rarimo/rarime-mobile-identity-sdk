@@ -9,6 +9,7 @@ import (
 	"github.com/tyler-smith/go-bip39"
 )
 
+// NewMnemonic generates a new mnemonic.
 func NewMnemonic() (string, error) {
 	entropy, err := bip39.NewEntropy(256)
 	if err != nil {
@@ -23,11 +24,13 @@ func NewMnemonic() (string, error) {
 	return mnemonic, nil
 }
 
+// SeedFromMnemonic generates a seed from a mnemonic.
 func SeedFromMnemonic(mnemonic string) ([]byte, error) {
 	seed := bip39.NewSeed(mnemonic, "")
 	return seed, nil
 }
 
+// NewSecretKeyFromSeed generates a new secret key from a seed.
 func NewSecretKeyFromSeed(seed []byte) (string, error) {
 	masterKey, err := bip32.NewMasterKey(seed)
 	if err != nil {
@@ -38,10 +41,4 @@ func NewSecretKeyFromSeed(seed []byte) (string, error) {
 	copy(secretKey[:], masterKey.Key[:32])
 
 	return hex.EncodeToString(secretKey[:]), nil
-}
-
-func NewBJJSecretKey() string {
-	secretKey := babyjub.NewRandPrivKey()
-
-	return hex.EncodeToString(secretKey[:])
 }
