@@ -1,11 +1,17 @@
 package identity
 
 import (
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
+
+// RsaSha12688Hex represents the register data type.
+const RsaSha12688Hex = "ee72172757e0738b89f37b0c9d04d6b9056da936d5e0959e3e8829d8fb91e4eb"
 
 // RegistrationMetaData contains all metadata for the Registration contract.
 //
@@ -28,6 +34,22 @@ type VerifierHelperProofPoints struct {
 	C [2]*big.Int
 }
 
+// Proof represents a proof.
+type Proof struct {
+	A []string   `json:"pi_a"`
+	B [][]string `json:"pi_b"`
+	C []string   `json:"pi_c"`
+}
+
+// PubSignals represents the public signals.
+type PubSignals []string
+
+// ZkProof represents a zk proof.
+type ZkProof struct {
+	Proof      Proof      `json:"proof"`
+	PubSignals PubSignals `json:"pub_signals"`
+}
+
 func newRegistrationCoder() (*abi.ABI, error) {
 	parsed, err := RegistrationMetaData.GetAbi()
 	if err != nil {
@@ -38,11 +60,86 @@ func newRegistrationCoder() (*abi.ABI, error) {
 }
 
 // BuildRegisterCalldata builds the calldata for the register function.
-func BuildRegisterCalldata(proofJSON string) ([]byte, error) {
+func BuildRegisterCalldata(proofJSON []byte, signature []byte, pubKeyPem []byte) ([]byte, error) {
+	zkProof := new(ZkProof)
+	if err := json.Unmarshal(proofJSON, zkProof); err != nil {
+		return nil, err
+	}
+
+	var a [2]*big.Int
+	for index, val := range zkProof.Proof.A[:2] {
+		aI, ok := new(big.Int).SetString(val, 10)
+		if !ok {
+			return nil, fmt.Errorf("error setting a[%d]: %v", index, val)
+		}
+
+		a[index] = aI
+	}
+
+	var b [2][2]*big.Int
+	for index, val := range zkProof.Proof.B[:2] {
+		for index2, val2 := range val[:2] {
+			bI, ok := new(big.Int).SetString(val2, 10)
+			if !ok {
+				return nil, fmt.Errorf("error setting b[%d][%d]: %v", index, index2, val2)
+			}
+
+			b[index][index2] = bI
+		}
+	}
+
+	b[0][0], b[0][1] = b[0][1], b[0][0]
+	b[1][0], b[1][1] = b[1][1], b[1][0]
+
+	var c [2]*big.Int
+	for index, val := range zkProof.Proof.C[:2] {
+		cI, ok := new(big.Int).SetString(val, 10)
+		if !ok {
+			return nil, fmt.Errorf("error setting c[%d]: %v", index, val)
+		}
+
+		c[index] = cI
+	}
+
+	dg1Commitment, ok := new(big.Int).SetString(zkProof.PubSignals[1], 10)
+	if !ok {
+		return nil, fmt.Errorf("error setting dg1Commitment: %v", zkProof.PubSignals[1])
+	}
+
+	pkIdentityHash, ok := new(big.Int).SetString(zkProof.PubSignals[2], 10)
+	if !ok {
+		return nil, fmt.Errorf("error setting pkIdentityHash: %v", zkProof.PubSignals[2])
+	}
+
+	proofPoints := &VerifierHelperProofPoints{
+		A: a,
+		B: b,
+		C: c,
+	}
+
+	datatypeBuf, err := hex.DecodeString(RsaSha12688Hex)
+	if err != nil {
+		return nil, err
+	}
+
+	datatype := [32]byte{}
+	copy(datatype[:], datatypeBuf)
+
+	pubKeyN, err := RsaPubKeyPemToN(pubKeyPem)
+	if err != nil {
+		return nil, err
+	}
+
+	passport := &RegistrationPassport{
+		DataType:  datatype,
+		PublicKey: pubKeyN.Bytes(),
+		Signature: signature,
+	}
+
 	abi, err := newRegistrationCoder()
 	if err != nil {
 		return nil, err
 	}
 
-	return abi.Pack("register")
+	return abi.Pack("register", pkIdentityHash, dg1Commitment, passport, proofPoints)
 }

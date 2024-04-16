@@ -10,7 +10,7 @@ import (
 func TestProfile(t *testing.T) {
 	secretKey := identity.NewBJJSecretKey()
 
-	t.Logf(secretKey)
+	t.Logf("secretKey: %v\n", hex.EncodeToString(secretKey))
 
 	profile, err := identity.NewProfile(secretKey)
 	if err != nil {

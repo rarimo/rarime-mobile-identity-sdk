@@ -1,17 +1,20 @@
 package identity
 
 import (
-	"encoding/hex"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"math/big"
 
 	"github.com/iden3/go-iden3-crypto/babyjub"
 )
 
 // NewBJJSecretKey generates a new secret key for the Baby JubJub curve.
-func NewBJJSecretKey() string {
+func NewBJJSecretKey() []byte {
 	secretKey := babyjub.NewRandPrivKey()
 
-	return hex.EncodeToString(secretKey[:])
+	return secretKey.Scalar().BigInt().Bytes()
 }
 
 // ByteArrayToBits converts a byte array to a bit array.
@@ -47,19 +50,22 @@ func SmartChunking(x *big.Int) []string {
 	return res
 }
 
-// def bigint_to_array(n: int, k: int, x: str) -> list[str]:
-//     # Initialize mod to 1 (Python's int can handle arbitrarily large numbers)
-//     mod = 1
-//     for _ in range(n):
-//         mod *= 2
+// RsaPubKeyPemToN extracts the modulus from a RSA public key PEM.
+func RsaPubKeyPemToN(pubKeyPem []byte) (*big.Int, error) {
+	block, _ := pem.Decode(pubKeyPem)
+	if block == nil {
+		return nil, fmt.Errorf("error decoding public key pem")
+	}
 
-//     # Initialize the return list
-//     ret = []
-//     x_temp = x
-//     for _ in range(k):
-//         # Append x_temp mod mod to the list
-//         ret.append(str(x_temp % mod))
-//         # Divide x_temp by mod for the next iteration
-//         x_temp //= mod  # Use integer division in Python
+	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing public key: %v", err)
+	}
 
-//     return ret
+	rsaPubKey, ok := pubKey.(*rsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("error casting public key to rsa public key")
+	}
+
+	return rsaPubKey.N, nil
+}
