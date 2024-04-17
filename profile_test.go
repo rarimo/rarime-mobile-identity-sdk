@@ -12,7 +12,9 @@ func TestProfile(t *testing.T) {
 
 	t.Logf("secretKey: %v\n", hex.EncodeToString(secretKey))
 
-	profile, err := identity.NewProfile(secretKey)
+	profile := &identity.Profile{}
+
+	profile, err := profile.NewProfile(secretKey)
 	if err != nil {
 		t.Errorf("NewProfile() failed: %v", err)
 	}

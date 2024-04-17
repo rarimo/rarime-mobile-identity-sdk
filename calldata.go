@@ -59,8 +59,11 @@ func newRegistrationCoder() (*abi.ABI, error) {
 	return parsed, nil
 }
 
+// CallDataBuilder builds the calldata for the register function.
+type CallDataBuilder struct{}
+
 // BuildRegisterCalldata builds the calldata for the register function.
-func (ZkProof) BuildRegisterCalldata(proofJSON []byte, signature []byte, pubKeyPem []byte) ([]byte, error) {
+func (s *CallDataBuilder) BuildRegisterCalldata(proofJSON []byte, signature []byte, pubKeyPem []byte) ([]byte, error) {
 	zkProof := new(ZkProof)
 	if err := json.Unmarshal(proofJSON, zkProof); err != nil {
 		return nil, err
