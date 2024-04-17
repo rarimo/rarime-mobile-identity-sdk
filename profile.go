@@ -28,7 +28,7 @@ type Profile struct {
 }
 
 // NewProfile creates a new profile.
-func NewProfile(secretKey []byte) (*Profile, error) {
+func (p Profile) NewProfile(secretKey []byte) (*Profile, error) {
 	secretKeyInt := new(big.Int).SetBytes(secretKey)
 
 	dataBlinder, err := poseidon.Hash([]*big.Int{secretKeyInt})
@@ -66,7 +66,7 @@ func (p *Profile) GetPublicKeyHash() ([]byte, error) {
 }
 
 // BuildRegisterIdentityInputs builds the inputs for the registerIdentity circuit.
-func BuildRegisterIdentityInputs(
+func (p Profile) BuildRegisterIdentityInputs(
 	secretKey []byte,
 	encapsulatedContent []byte,
 	signedAttributes []byte,
