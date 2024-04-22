@@ -1,12 +1,22 @@
 package identity
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 
+	"github.com/decred/dcrd/bech32"
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
+	"github.com/rarimo/zkp-iden3-exposer/wallet"
 )
+
+// AddressPrefix represents the cosmos address prefix.
+const AddressPrefix = "rarimo"
+
+// EventID represents the event ID.
+var EventID, _ = new(big.Int).SetString("ac42d1a986804618c7a793fbe814d9b31e47be51e082806363dca6958f3062", 16)
 
 // RegisterIdentityExp represents RSA exponent.
 var RegisterIdentityExp = []string{"65537", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"}
@@ -22,26 +32,26 @@ var IcaoMerkleInclusionOrder = []string{"0", "0", "0", "0", "0", "0", "0", "0", 
 
 // Profile represents a user profile.
 type Profile struct {
-	secretKey   *babyjub.PrivKeyScalar
-	publicKey   *babyjub.PublicKey
-	dataBlinder *big.Int
+	secretKey *babyjub.PrivKeyScalar
+	publicKey *babyjub.PublicKey
+	wallet    *wallet.Wallet
 }
 
 // NewProfile creates a new profile.
 func (p *Profile) NewProfile(secretKey []byte) (*Profile, error) {
 	secretKeyInt := new(big.Int).SetBytes(secretKey)
 
-	dataBlinder, err := poseidon.Hash([]*big.Int{secretKeyInt})
-	if err != nil {
-		return nil, fmt.Errorf("error hashing secret key: %v", err)
-	}
-
 	secretKeyScalar := babyjub.NewPrivKeyScalar(secretKeyInt)
 
+	wallet, err := wallet.NewWallet(hex.EncodeToString(secretKeyInt.Bytes()), AddressPrefix)
+	if err != nil {
+		return nil, fmt.Errorf("error creating wallet: %v", err)
+	}
+
 	return &Profile{
-		secretKey:   secretKeyScalar,
-		publicKey:   secretKeyScalar.Public(),
-		dataBlinder: dataBlinder,
+		secretKey: secretKeyScalar,
+		publicKey: secretKeyScalar.Public(),
+		wallet:    wallet,
 	}, nil
 }
 
@@ -65,9 +75,13 @@ func (p *Profile) GetPublicKeyHash() ([]byte, error) {
 	return publicKeyHash.Bytes(), nil
 }
 
+// GetRarimoAddress returns the Rarimo cosmos address
+func (p *Profile) GetRarimoAddress() string {
+	return p.wallet.Address
+}
+
 // BuildRegisterIdentityInputs builds the inputs for the registerIdentity circuit.
 func (p *Profile) BuildRegisterIdentityInputs(
-	secretKey []byte,
 	encapsulatedContent []byte,
 	signedAttributes []byte,
 	dg1 []byte,
@@ -75,8 +89,6 @@ func (p *Profile) BuildRegisterIdentityInputs(
 	pubKeyPem []byte,
 	signature []byte,
 ) ([]byte, error) {
-	secretKeyInt := new(big.Int).SetBytes(secretKey[:])
-
 	rsaPubKeyN, err := RsaPubKeyPemToN(pubKeyPem)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing rsa public key: %v", err)
@@ -85,7 +97,7 @@ func (p *Profile) BuildRegisterIdentityInputs(
 	signatureInt := new(big.Int).SetBytes(signature)
 
 	inputs := &RegisterIdentityInputs{
-		SkIdentity:                  secretKeyInt.String(),
+		SkIdentity:                  p.secretKey.BigInt().String(),
 		EncapsulatedContent:         ByteArrayToBits(encapsulatedContent),
 		SignedAttributes:            ByteArrayToBits(signedAttributes),
 		Sign:                        SmartChunking(signatureInt),
@@ -99,4 +111,66 @@ func (p *Profile) BuildRegisterIdentityInputs(
 	}
 
 	return inputs.Marshal()
+}
+
+// BuildQueryIdentityInputs builds the inputs for the queryIdentity circuit.
+func (p *Profile) BuildQueryIdentityInputs(
+	dg1 []byte,
+	smtProofJSON []byte,
+	selector string,
+	pkPassportHash string,
+	issueTimestamp string,
+	identityCounter string,
+	timestampLowerbound string,
+	timestampUpperbound string,
+	identityCounterLowerbound string,
+	identityCounterUpperbound string,
+) ([]byte, error) {
+	var smtProof SMTProof
+	if err := json.Unmarshal(smtProofJSON, &smtProof); err != nil {
+		return nil, fmt.Errorf("error unmarshalling id state siblings: %v", err)
+	}
+
+	idStateRoot := new(big.Int).SetBytes(smtProof.Root).String()
+
+	var idStateSiblings []string
+	for _, sibling := range smtProof.Siblings {
+		idStateSiblings = append(idStateSiblings, new(big.Int).SetBytes(sibling).String())
+	}
+
+	_, decodedAddress, err := bech32.Decode(p.wallet.Address)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding address: %v", err)
+	}
+
+	decodedAddressInt := new(big.Int).SetBytes(decodedAddress)
+
+	inputs := &QueryIdentityInputs{
+		Dg1:                       ByteArrayToBits(dg1),
+		EventID:                   EventID.String(),
+		EventData:                 decodedAddressInt.String(),
+		IDStateRoot:               idStateRoot,
+		IDStateSiblings:           idStateSiblings,
+		PkPassportHash:            pkPassportHash,
+		Selector:                  selector,
+		SkIdentity:                p.secretKey.BigInt().String(),
+		Timestamp:                 issueTimestamp,
+		IdentityCounter:           identityCounter,
+		TimestampLowerbound:       "0",
+		TimestampUpperbound:       "0",
+		IdentityCounterLowerbound: identityCounterLowerbound,
+		IdentityCounterUpperbound: identityCounterUpperbound,
+		BirthDateLowerbound:       "0x303030303030",
+		BirthDateUpperbound:       "0x303030303030",
+		ExpirationDateLowerbound:  "0x303030303030",
+		ExpirationDateUpperbound:  "0x303030303030",
+		CitizenshipMask:           "0x303030303030",
+	}
+
+	json, err := inputs.Marshal()
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling inputs: %v", err)
+	}
+
+	return json, nil
 }

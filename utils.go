@@ -8,6 +8,7 @@ import (
 	"math/big"
 
 	"github.com/iden3/go-iden3-crypto/babyjub"
+	"github.com/iden3/go-iden3-crypto/poseidon"
 )
 
 // NewBJJSecretKey generates a new secret key for the Baby JubJub curve.
@@ -68,4 +69,34 @@ func RsaPubKeyPemToN(pubKeyPem []byte) (*big.Int, error) {
 	}
 
 	return rsaPubKey.N, nil
+}
+
+// CalculateProofIndex calculates the proof index.
+func CalculateProofIndex(passportKey string, identityKey string) ([]byte, error) {
+	passportKeyInt, ok := new(big.Int).SetString(passportKey, 10)
+	if !ok {
+		return nil, fmt.Errorf("passport key is not int")
+	}
+
+	identityKeyInt, ok := new(big.Int).SetString(identityKey, 10)
+	if !ok {
+		return nil, fmt.Errorf("identity key is not int")
+	}
+
+	hash, err := poseidon.Hash([]*big.Int{passportKeyInt, identityKeyInt})
+	if err != nil {
+		return nil, fmt.Errorf("error hashing passport and identity key: %v", err)
+	}
+
+	return hash.Bytes(), nil
+}
+
+// BigIntToBytes converts a big integer to a byte array.
+func BigIntToBytes(x string) ([]byte, error) {
+	bigInt, ok := new(big.Int).SetString(x, 10)
+	if !ok {
+		return nil, fmt.Errorf("error converting string to big int")
+	}
+
+	return bigInt.Bytes(), nil
 }
