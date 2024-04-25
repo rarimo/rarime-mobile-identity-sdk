@@ -13,6 +13,9 @@ import (
 // RsaSha12688Hex represents the register data type.
 const RsaSha12688Hex = "ee72172757e0738b89f37b0c9d04d6b9056da936d5e0959e3e8829d8fb91e4eb"
 
+// RsaSha12704Hex represents the register data type
+const RsaSha12704Hex = "4b5153708e847a55cf1cd23a5a828d7d3ef194a6a3d6b9cb957af170f560b016"
+
 // RegistrationMetaData contains all metadata for the Registration contract.
 //
 // Register(identityKey_ *big.Int, dgCommit_ *big.Int, passport_ RegistrationPassport, zkPoints_ VerifierHelperProofPoints)
@@ -63,7 +66,12 @@ func newRegistrationCoder() (*abi.ABI, error) {
 type CallDataBuilder struct{}
 
 // BuildRegisterCalldata builds the calldata for the register function.
-func (s *CallDataBuilder) BuildRegisterCalldata(proofJSON []byte, signature []byte, pubKeyPem []byte) ([]byte, error) {
+func (s *CallDataBuilder) BuildRegisterCalldata(
+	proofJSON []byte,
+	signature []byte,
+	pubKeyPem []byte,
+	encapsulatedContentSize int,
+) ([]byte, error) {
 	zkProof := new(ZkProof)
 	if err := json.Unmarshal(proofJSON, zkProof); err != nil {
 		return nil, err
@@ -120,9 +128,19 @@ func (s *CallDataBuilder) BuildRegisterCalldata(proofJSON []byte, signature []by
 		C: c,
 	}
 
-	datatypeBuf, err := hex.DecodeString(RsaSha12688Hex)
-	if err != nil {
-		return nil, err
+	var err error
+	var datatypeBuf []byte
+	switch encapsulatedContentSize {
+	case 2688:
+		datatypeBuf, err = hex.DecodeString(RsaSha12688Hex)
+		if err != nil {
+			return nil, err
+		}
+	case 2704:
+		datatypeBuf, err = hex.DecodeString(RsaSha12704Hex)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	datatype := [32]byte{}
