@@ -5,11 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strconv"
+	"time"
 
+	"cosmossdk.io/errors"
 	"github.com/decred/dcrd/bech32"
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
+	"github.com/rarimo/zkp-iden3-exposer/client"
 	"github.com/rarimo/zkp-iden3-exposer/wallet"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 )
 
 // AddressPrefix represents the cosmos address prefix.
@@ -35,6 +41,13 @@ type Profile struct {
 	secretKey *babyjub.PrivKeyScalar
 	publicKey *babyjub.PublicKey
 	wallet    *wallet.Wallet
+}
+
+// CosmosConfig represent a config for cosmos actions
+type CosmosConfig struct {
+	ChainID string
+	Denom   string
+	RPCIP   string
 }
 
 // NewProfile creates a new profile.
@@ -173,4 +186,52 @@ func (p *Profile) BuildQueryIdentityInputs(
 	}
 
 	return json, nil
+}
+
+// WalletSend sends tokens to desrination via Cosmos
+func (p *Profile) WalletSend(toAddr string, amount string, chainID string, denom string, rpcIP string) ([]byte, error) {
+	chainConfig := client.ChainConfig{
+		ChainId:     chainID,
+		Denom:       denom,
+		MinGasPrice: 0,
+		GasLimit:    uint64(1_000_000),
+	}
+
+	grpcClient, err := grpc.Dial(
+		rpcIP,
+		grpc.WithInsecure(),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:    10 * time.Second, // wait time before ping if no activity
+			Timeout: 20 * time.Second, // ping timeout
+		}),
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error dialing grpc")
+	}
+
+	rarimoClient, err := client.NewClient(
+		grpcClient,
+		chainConfig,
+		*p.wallet,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error creating client")
+	}
+
+	sendAmount, err := strconv.ParseInt(amount, 10, 64)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse amount: ")
+	}
+
+	txResp, err := rarimoClient.Send(
+		p.wallet.Address,
+		toAddr,
+		sendAmount,
+		denom,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error sending tx")
+	}
+
+	return txResp, nil
 }
