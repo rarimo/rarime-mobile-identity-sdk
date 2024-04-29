@@ -1,5 +1,5 @@
 set -e
 
-go get -u golang.org/x/mobile/bind
+/usr/local/go/bin/go get -u golang.org/x/mobile/bind
 
-gomobile bind -target ios -o ./Frameworks/Identity.xcframework
+/Users/user/go/bin/gomobile bind -target ios -o ./Frameworks/Identity.xcframework
