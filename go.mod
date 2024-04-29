@@ -7,6 +7,7 @@ require (
 	github.com/decred/dcrd/bech32 v1.1.3
 	github.com/ethereum/go-ethereum v1.13.14
 	github.com/iden3/go-iden3-crypto v0.0.16
+	github.com/rarimo/certificate-transparency-go v0.0.0-20240305114501-050b1f19639a
 	github.com/rarimo/zkp-iden3-exposer v0.1.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tyler-smith/go-bip32 v1.0.0
@@ -80,6 +81,7 @@ require (
 	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
+	github.com/keybase/go-crypto v0.0.0-20200123153347-de78d2cb44f4 // indirect
 	github.com/klauspost/compress v1.17.7 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
@@ -121,10 +123,9 @@ require (
 	github.com/zondax/hid v0.9.2 // indirect
 	github.com/zondax/ledger-go v0.14.3 // indirect
 	go.etcd.io/bbolt v1.3.8 // indirect
-	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
-	golang.org/x/mobile v0.0.0-20240404231514-09dbf07665ed // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
