@@ -43,13 +43,6 @@ type Profile struct {
 	wallet    *wallet.Wallet
 }
 
-// CosmosConfig represent a config for cosmos actions
-type CosmosConfig struct {
-	ChainID string
-	Denom   string
-	RPCIP   string
-}
-
 // NewProfile creates a new profile.
 func (p *Profile) NewProfile(secretKey []byte) (*Profile, error) {
 	secretKeyInt := new(big.Int).SetBytes(secretKey)
@@ -101,6 +94,8 @@ func (p *Profile) BuildRegisterIdentityInputs(
 	dg15 []byte,
 	pubKeyPem []byte,
 	signature []byte,
+	slavePem []byte,
+	mastersPem []byte,
 ) ([]byte, error) {
 	rsaPubKeyN, err := RsaPubKeyPemToN(pubKeyPem)
 	if err != nil {
@@ -108,6 +103,12 @@ func (p *Profile) BuildRegisterIdentityInputs(
 	}
 
 	signatureInt := new(big.Int).SetBytes(signature)
+
+	x509Util := X509Util{}
+	certInputs, err := x509Util.BuildPartialRegistrationCircuitInputs(slavePem, mastersPem)
+	if err != nil {
+		return nil, fmt.Errorf("error building partial registration circuit inputs: %v", err)
+	}
 
 	inputs := &RegisterIdentityInputs{
 		SkIdentity:                  p.secretKey.BigInt().String(),
@@ -121,6 +122,9 @@ func (p *Profile) BuildRegisterIdentityInputs(
 		IcaoMerkleRoot:              IcaoMerkleRoot.String(),
 		IcaoMerkleInclusionBranches: IcaoMerkleInclusionBranches,
 		IcaoMerkleInclusionOrder:    IcaoMerkleInclusionOrder,
+		SlaveSignedAttributes:       certInputs.SlaveSignedAttributes,
+		SlaveSignature:              certInputs.SlaveSignature,
+		MasterModulus:               certInputs.MasterModulus,
 	}
 
 	return inputs.Marshal()

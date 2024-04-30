@@ -21,7 +21,7 @@ func TestCert(t *testing.T) {
 
 	x508Util := identity.X509Util{}
 
-	master, err := x508Util.GetMaster(slavePem, mastersPem)
+	_, master, err := x508Util.GetMaster(slavePem, mastersPem)
 	if err != nil {
 		t.Errorf("failed to get master: %v", err)
 	}

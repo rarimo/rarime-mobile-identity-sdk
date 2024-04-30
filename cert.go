@@ -1,8 +1,11 @@
 package identity
 
 import (
+	"crypto/rsa"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
+	"math/big"
 
 	"github.com/rarimo/certificate-transparency-go/x509"
 )
@@ -11,10 +14,10 @@ import (
 type X509Util struct{}
 
 // GetMaster takes a slave certificate and returns its master
-func (x *X509Util) GetMaster(slavePem []byte, mastersPem []byte) (*x509.Certificate, error) {
+func (x *X509Util) GetMaster(slavePem []byte, mastersPem []byte) (*x509.Certificate, *x509.Certificate, error) {
 	slaveCert, err := parseCertificate(slavePem)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse slave: %v", err)
+		return nil, nil, fmt.Errorf("failed to parse slave: %v", err)
 	}
 
 	roots := x509.NewCertPool()
@@ -24,14 +27,14 @@ func (x *X509Util) GetMaster(slavePem []byte, mastersPem []byte) (*x509.Certific
 		Roots: roots,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("invalid certificate: %w", err)
+		return nil, nil, fmt.Errorf("invalid certificate: %w", err)
 	}
 
 	if len(foundCerts) == 0 {
-		return nil, fmt.Errorf("invalid certificate: no valid certificate found")
+		return nil, nil, fmt.Errorf("invalid certificate: no valid certificate found")
 	}
 
-	return foundCerts[0][1], nil
+	return slaveCert, foundCerts[0][1], nil
 }
 
 // PublicKeyToPem takes an x509 certificate and returns its public key in PEM format
@@ -73,4 +76,33 @@ func parseCertificate(pemFile []byte) (*x509.Certificate, error) {
 	}
 
 	return cert, nil
+}
+
+// BuildPartialRegistrationCircuitInputs returns the inputs for the registration circuit
+func (x *X509Util) BuildPartialRegistrationCircuitInputs(slavePem []byte, mastersPem []byte) (*PassportCertificateInputs, error) {
+	slaveCert, masterCert, err := x.GetMaster(slavePem, mastersPem)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get master: %v", err)
+	}
+
+	slaveSignedAttributes := slaveCert.RawTBSCertificate
+	slaveSignature := slaveCert.Signature
+
+	fmt.Println("slaveSignedAttributes: ", hex.EncodeToString(slaveSignedAttributes))
+
+	var masterModulus []byte
+	switch pub := masterCert.PublicKey.(type) {
+	case *rsa.PublicKey:
+		masterModulus = pub.N.Bytes()
+	default:
+		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+	}
+
+	inputs := &PassportCertificateInputs{
+		SlaveSignedAttributes: ByteArrayToBits(slaveSignedAttributes),
+		SlaveSignature:        SmartChunking(new(big.Int).SetBytes(slaveSignature)),
+		MasterModulus:         SmartChunking(new(big.Int).SetBytes(masterModulus)),
+	}
+
+	return inputs, nil
 }
