@@ -21,7 +21,7 @@ func TestCert(t *testing.T) {
 
 	x508Util := identity.X509Util{}
 
-	_, master, err := x508Util.GetMaster(slavePem, mastersPem)
+	child, master, err := x508Util.GetMaster(slavePem, mastersPem)
 	if err != nil {
 		t.Errorf("failed to get master: %v", err)
 	}
@@ -37,4 +37,11 @@ func TestCert(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to get master pem: %v", err)
 	}
+
+	position, err := x508Util.FindKeyPositionInSignedAttributes(child)
+	if err != nil {
+		t.Errorf("failed to find key position in signed attributes: %v", err)
+	}
+
+	t.Logf("key position: %v", position)
 }

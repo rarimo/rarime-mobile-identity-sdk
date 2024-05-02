@@ -3,6 +3,7 @@ package identity
 import (
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/binary"
 	"encoding/pem"
 	"fmt"
 	"math/big"
@@ -10,6 +11,8 @@ import (
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
 )
+
+const smartChunking2BlockSize uint64 = 512
 
 // NewBJJSecretKey generates a new secret key for the Baby JubJub curve.
 func NewBJJSecretKey() []byte {
@@ -49,6 +52,38 @@ func SmartChunking(x *big.Int) []string {
 	}
 
 	return res
+}
+
+// SmartChunking2 does some weird stuff.
+//
+// For more details contact the den4ik.
+func SmartChunking2(bits []int64, blockNumber uint64) []int64 {
+	dataBitsNumber := uint64(len(bits) + 1 + 64)
+	dataBlockNumber := dataBitsNumber/smartChunking2BlockSize + 1
+	zeroDataBitsNumber := dataBlockNumber*smartChunking2BlockSize - dataBitsNumber
+
+	var result []int64
+	result = append(result, bits...)
+	result = append(result, 1)
+
+	for i := uint64(0); i < zeroDataBitsNumber; i++ {
+		result = append(result, 0)
+	}
+
+	bitsNumberBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(bitsNumberBytes, uint64(len(bits)))
+
+	bitsNumber := ByteArrayToBits(bitsNumberBytes)
+
+	result = append(result, bitsNumber...)
+
+	restBlocksNumber := blockNumber - dataBlockNumber
+
+	for i := uint64(0); i < restBlocksNumber*smartChunking2BlockSize; i++ {
+		result = append(result, 0)
+	}
+
+	return result
 }
 
 // RsaPubKeyPemToN extracts the modulus from a RSA public key PEM.

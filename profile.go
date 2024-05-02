@@ -112,13 +112,13 @@ func (p *Profile) BuildRegisterIdentityInputs(
 
 	inputs := &RegisterIdentityInputs{
 		SkIdentity:                  p.secretKey.BigInt().String(),
-		EncapsulatedContent:         ByteArrayToBits(encapsulatedContent),
-		SignedAttributes:            ByteArrayToBits(signedAttributes),
+		EncapsulatedContent:         SmartChunking2(ByteArrayToBits(encapsulatedContent), 6),
+		SignedAttributes:            SmartChunking2(ByteArrayToBits(signedAttributes), 2),
 		Sign:                        SmartChunking(signatureInt),
 		Exp:                         RegisterIdentityExp,
 		Modulus:                     SmartChunking(rsaPubKeyN),
-		Dg1:                         ByteArrayToBits(dg1),
-		Dg15:                        ByteArrayToBits(dg15),
+		Dg1:                         SmartChunking2(ByteArrayToBits(dg1), 2),
+		Dg15:                        SmartChunking2(ByteArrayToBits(dg15), 6),
 		IcaoMerkleRoot:              IcaoMerkleRoot.String(),
 		IcaoMerkleInclusionBranches: IcaoMerkleInclusionBranches,
 		IcaoMerkleInclusionOrder:    IcaoMerkleInclusionOrder,

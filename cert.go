@@ -1,14 +1,19 @@
 package identity
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"encoding/hex"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"math/big"
 
 	"github.com/rarimo/certificate-transparency-go/x509"
 )
+
+// PubKeyANS1Prefix is the prefix for the public key in ANS1 format
+var PubKeyANS1Prefix []byte = []byte{0x02, 0x82, 0x02, 0x01, 0x00}
 
 // X509Util used to simplify work with x509 certificates
 type X509Util struct{}
@@ -105,4 +110,16 @@ func (x *X509Util) BuildPartialRegistrationCircuitInputs(slavePem []byte, master
 	}
 
 	return inputs, nil
+}
+
+// FindKeyPositionInSignedAttributes finds the position of the key in the signed attributes
+func (x *X509Util) FindKeyPositionInSignedAttributes(cert *x509.Certificate) (int, error) {
+	signedAttributes := cert.RawTBSCertificate
+
+	index := bytes.Index(signedAttributes, PubKeyANS1Prefix)
+	if index == -1 {
+		return 0, errors.New("subarray not found in array")
+	}
+
+	return index + len(PubKeyANS1Prefix), nil
 }

@@ -1,6 +1,7 @@
 package identity_test
 
 import (
+	"encoding/hex"
 	"math/big"
 	"testing"
 
@@ -16,6 +17,16 @@ func TestBytesArrayToBits(t *testing.T) {
 	assert.Equal(t, []int64{0, 0, 0, 0, 0, 0, 0, 1}, bits[:8], "First byte")
 	assert.Equal(t, []int64{0, 0, 0, 0, 0, 0, 1, 0}, bits[8:16], "Second byte")
 	assert.Equal(t, []int64{0, 0, 0, 0, 0, 0, 1, 1}, bits[16:24], "Third byte")
+}
+
+func TestSmartChunking2(t *testing.T) {
+	bytes, _ := hex.DecodeString("48656c6c6f20776f726c64")
+
+	bits := identity.ByteArrayToBits(bytes)
+
+	res := identity.SmartChunking2(bits, 1)
+
+	t.Log(res)
 }
 
 func TestSmartChunking(t *testing.T) {
