@@ -1,6 +1,7 @@
 package identity_test
 
 import (
+	"encoding/hex"
 	"os"
 	"testing"
 
@@ -21,27 +22,31 @@ func TestCert(t *testing.T) {
 
 	x508Util := identity.X509Util{}
 
-	child, master, err := x508Util.GetMaster(slavePem, mastersPem)
+	_, master, err := x508Util.GetMaster(slavePem, mastersPem)
 	if err != nil {
 		t.Errorf("failed to get master: %v", err)
 	}
 
 	assert.NotEqual(t, nil, master)
 
-	_, err = x508Util.PublicKeyToPem(master)
-	if err != nil {
-		t.Errorf("failed to get public key from pem: %v", err)
-	}
-
-	_, err = x508Util.CertificateToPem(master)
-	if err != nil {
-		t.Errorf("failed to get master pem: %v", err)
-	}
-
-	position, err := x508Util.FindKeyPositionInSignedAttributes(child)
+	keyPositionInSignedAttributes, err := x508Util.FindKeyPositionInSignedAttributes(master)
 	if err != nil {
 		t.Errorf("failed to find key position in signed attributes: %v", err)
 	}
 
-	t.Logf("key position: %v", position)
+	t.Logf("key position in signed attributes: %v", keyPositionInSignedAttributes)
+
+	expirationPositionInSignedAttributes, err := x508Util.FindExpirationPositionInSignedAttributes(master)
+	if err != nil {
+		t.Errorf("failed to find expiration position in signed attributes: %v", err)
+	}
+
+	t.Logf("expiration position in signed attributes: %v", expirationPositionInSignedAttributes)
+
+	masterCertificateIndex, err := x508Util.GetMasterCertificateIndex(slavePem, mastersPem)
+	if err != nil {
+		t.Errorf("failed to get master certificate index: %v", err)
+	}
+
+	t.Logf("master certificate index: %v", hex.EncodeToString(masterCertificateIndex))
 }

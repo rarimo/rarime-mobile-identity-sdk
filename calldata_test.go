@@ -34,3 +34,22 @@ func TestBuildRegisterCalldata(t *testing.T) {
 
 	t.Log(hex.EncodeToString(calldata))
 }
+
+func TestBuildRegisterCertificate(t *testing.T) {
+	slavePem, err := os.ReadFile("assets/slave.pem")
+	if err != nil {
+		t.Errorf("failed to read slave pem: %v", err)
+	}
+
+	mastersPem, err := os.ReadFile("assets/masters.pem")
+	if err != nil {
+		t.Errorf("failed to read masters pem: %v", err)
+	}
+
+	calldataBuilder := &identity.CallDataBuilder{}
+
+	_, err = calldataBuilder.BuildRegisterCertificateCalldata(slavePem, mastersPem)
+	if err != nil {
+		t.Errorf("failed to build calldata: %v", err)
+	}
+}

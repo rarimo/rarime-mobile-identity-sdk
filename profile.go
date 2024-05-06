@@ -94,9 +94,14 @@ func (p *Profile) BuildRegisterIdentityInputs(
 	dg15 []byte,
 	pubKeyPem []byte,
 	signature []byte,
-	slavePem []byte,
-	mastersPem []byte,
+	isEcdsaActiveAuthentication bool,
+	certificatesSMTProofJSON []byte,
 ) ([]byte, error) {
+	var certificatesSMTProof SMTProof
+	if err := json.Unmarshal(certificatesSMTProofJSON, &certificatesSMTProof); err != nil {
+		return nil, fmt.Errorf("error unmarshalling certificates SMT proof: %v", err)
+	}
+
 	rsaPubKeyN, err := RsaPubKeyPemToN(pubKeyPem)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing rsa public key: %v", err)
@@ -104,27 +109,42 @@ func (p *Profile) BuildRegisterIdentityInputs(
 
 	signatureInt := new(big.Int).SetBytes(signature)
 
-	x509Util := X509Util{}
-	certInputs, err := x509Util.BuildPartialRegistrationCircuitInputs(slavePem, mastersPem)
-	if err != nil {
-		return nil, fmt.Errorf("error building partial registration circuit inputs: %v", err)
+	signedAttributesSize := len(signedAttributes) * 8
+
+	var SaTimestampEnabled string
+	if signedAttributesSize == 832 {
+		SaTimestampEnabled = "1"
+	} else {
+		SaTimestampEnabled = "0"
+	}
+
+	var EcdsaShiftEnabled string
+	if isEcdsaActiveAuthentication {
+		EcdsaShiftEnabled = "1"
+	} else {
+		EcdsaShiftEnabled = "0"
+	}
+
+	slaveMerleRoot := new(big.Int).SetBytes(certificatesSMTProof.Root).String()
+
+	var slaveMerkleInclusionBranches []string
+	for _, sibling := range certificatesSMTProof.Siblings {
+		slaveMerkleInclusionBranches = append(slaveMerkleInclusionBranches, new(big.Int).SetBytes(sibling).String())
 	}
 
 	inputs := &RegisterIdentityInputs{
-		SkIdentity:                  p.secretKey.BigInt().String(),
-		EncapsulatedContent:         SmartChunking2(ByteArrayToBits(encapsulatedContent), 6),
-		SignedAttributes:            SmartChunking2(ByteArrayToBits(signedAttributes), 2),
-		Sign:                        SmartChunking(signatureInt),
-		Exp:                         RegisterIdentityExp,
-		Modulus:                     SmartChunking(rsaPubKeyN),
-		Dg1:                         SmartChunking2(ByteArrayToBits(dg1), 2),
-		Dg15:                        SmartChunking2(ByteArrayToBits(dg15), 6),
-		IcaoMerkleRoot:              IcaoMerkleRoot.String(),
-		IcaoMerkleInclusionBranches: IcaoMerkleInclusionBranches,
-		IcaoMerkleInclusionOrder:    IcaoMerkleInclusionOrder,
-		SlaveSignedAttributes:       certInputs.SlaveSignedAttributes,
-		SlaveSignature:              certInputs.SlaveSignature,
-		MasterModulus:               certInputs.MasterModulus,
+		SkIdentity:                   p.secretKey.BigInt().String(),
+		EncapsulatedContent:          SmartChunking2(ByteArrayToBits(encapsulatedContent), 6),
+		SignedAttributes:             SmartChunking2(ByteArrayToBits(signedAttributes), 2),
+		Sign:                         SmartChunking(signatureInt),
+		Modulus:                      SmartChunking(rsaPubKeyN),
+		Exp:                          RegisterIdentityExp,
+		Dg1:                          SmartChunking2(ByteArrayToBits(dg1), 2),
+		Dg15:                         SmartChunking2(ByteArrayToBits(dg15), 6),
+		SlaveMerleRoot:               slaveMerleRoot,
+		SlaveMerkleInclusionBranches: slaveMerkleInclusionBranches,
+		EcdsaShiftEnabled:            EcdsaShiftEnabled,
+		SaTimestampEnabled:           SaTimestampEnabled,
 	}
 
 	return inputs.Marshal()

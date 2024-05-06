@@ -4,20 +4,18 @@ import "encoding/json"
 
 // RegisterIdentityInputs represents the inputs for the registerIdentity circuit.
 type RegisterIdentityInputs struct {
-	SkIdentity                  string   `json:"skIdentity"`
-	EncapsulatedContent         []int64  `json:"encapsulatedContent"`
-	SignedAttributes            []int64  `json:"signedAttributes"`
-	Sign                        []string `json:"sign"`
-	Modulus                     []string `json:"modulus"`
-	Exp                         []string `json:"exp"`
-	Dg1                         []int64  `json:"dg1"`
-	Dg15                        []int64  `json:"dg15"`
-	IcaoMerkleRoot              string   `json:"icaoMerkleRoot"`
-	IcaoMerkleInclusionBranches []string `json:"icaoMerkleInclusionBranches"`
-	IcaoMerkleInclusionOrder    []string `json:"icaoMerkleInclusionOrder"`
-	SlaveSignedAttributes       []int64  `json:"slaveSignedAttributes"`
-	SlaveSignature              []string `json:"slaveSignature"`
-	MasterModulus               []string `json:"masterModulus"`
+	SkIdentity                   string   `json:"skIdentity"`
+	EncapsulatedContent          []int64  `json:"encapsulatedContent"`
+	SignedAttributes             []int64  `json:"signedAttributes"`
+	Sign                         []string `json:"sign"`
+	Modulus                      []string `json:"modulus"`
+	Exp                          []string `json:"exp"`
+	Dg1                          []int64  `json:"dg1"`
+	Dg15                         []int64  `json:"dg15"`
+	SlaveMerleRoot               string   `json:"slaveMerkleRoot"`
+	SlaveMerkleInclusionBranches []string `json:"slaveMerkleInclusionBranches"`
+	EcdsaShiftEnabled            string   `json:"ecdsaShiftEnabled"`
+	SaTimestampEnabled           string   `json:"saTimestampEnabled"`
 }
 
 // Marshal returns the JSON representation of the inputs.
