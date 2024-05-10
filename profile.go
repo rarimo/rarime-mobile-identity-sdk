@@ -102,9 +102,9 @@ func (p *Profile) BuildRegisterIdentityInputs(
 		return nil, fmt.Errorf("error unmarshalling certificates SMT proof: %v", err)
 	}
 
-	rsaPubKeyN, err := RsaPubKeyPemToN(pubKeyPem)
+	rsaPubKeyN, _, err := pubKeyPemToRaw(pubKeyPem)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing rsa public key: %v", err)
+		return nil, fmt.Errorf("error parsing public key: %v", err)
 	}
 
 	signatureInt := new(big.Int).SetBytes(signature)
@@ -137,7 +137,7 @@ func (p *Profile) BuildRegisterIdentityInputs(
 		EncapsulatedContent:          SmartChunking2(ByteArrayToBits(encapsulatedContent), 6),
 		SignedAttributes:             SmartChunking2(ByteArrayToBits(signedAttributes), 2),
 		Sign:                         SmartChunking(signatureInt),
-		Modulus:                      SmartChunking(rsaPubKeyN),
+		Modulus:                      SmartChunking(new(big.Int).SetBytes(rsaPubKeyN)),
 		Exp:                          RegisterIdentityExp,
 		Dg1:                          SmartChunking2(ByteArrayToBits(dg1), 2),
 		Dg15:                         SmartChunking2(ByteArrayToBits(dg15), 6),

@@ -27,7 +27,7 @@ func TestBuildRegisterCalldata(t *testing.T) {
 
 	builder := &identity.CallDataBuilder{}
 
-	calldata, err := builder.BuildRegisterCalldata(proofJson, signature, pubKeyPem, 2688)
+	calldata, err := builder.BuildRegisterCalldata(proofJson, signature, pubKeyPem, []byte{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +48,9 @@ func TestBuildRegisterCertificate(t *testing.T) {
 
 	calldataBuilder := &identity.CallDataBuilder{}
 
-	_, err = calldataBuilder.BuildRegisterCertificateCalldata(slavePem, mastersPem)
+	cosmosAddr := "core-api.node1.mainnet-beta.rarimo.com:443"
+
+	_, err = calldataBuilder.BuildRegisterCertificateCalldata(cosmosAddr, slavePem, mastersPem)
 	if err != nil {
 		t.Errorf("failed to build calldata: %v", err)
 	}

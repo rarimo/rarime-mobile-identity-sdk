@@ -1,8 +1,10 @@
 package identity
 
 import (
+	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/asn1"
 	"encoding/binary"
 	"encoding/pem"
 	"fmt"
@@ -13,6 +15,9 @@ import (
 )
 
 const smartChunking2BlockSize uint64 = 512
+const brainpoolP256CurveOID = "1.2.840.10045.2.1"
+const lowSMaxHex = "54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb"
+const nHex = "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7"
 
 // NewBJJSecretKey generates a new secret key for the Baby JubJub curve.
 func NewBJJSecretKey() []byte {
@@ -86,24 +91,44 @@ func SmartChunking2(bits []int64, blockNumber uint64) []int64 {
 	return result
 }
 
-// RsaPubKeyPemToN extracts the modulus from a RSA public key PEM.
-func RsaPubKeyPemToN(pubKeyPem []byte) (*big.Int, error) {
+// pubKeyPemToRaw extracts the modulus from a RSA public key PEM.
+func pubKeyPemToRaw(pubKeyPem []byte) ([]byte, bool, error) {
 	block, _ := pem.Decode(pubKeyPem)
 	if block == nil {
-		return nil, fmt.Errorf("error decoding public key pem")
+		return nil, false, fmt.Errorf("error decoding public key pem")
+	}
+
+	var info publicKeyInfo
+	_, err := asn1.Unmarshal(block.Bytes, &info)
+	if err == nil {
+		if info.Algorithm.Algorithm.String() == brainpoolP256CurveOID {
+			var raw []byte
+			raw = append(raw, info.SubjectPublicKey.Bytes[1:]...)
+
+			return raw, true, nil
+		}
 	}
 
 	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing public key: %v", err)
+		return nil, false, fmt.Errorf("error parsing public key: %v", err)
 	}
 
-	rsaPubKey, ok := pubKey.(*rsa.PublicKey)
-	if !ok {
-		return nil, fmt.Errorf("error casting public key to rsa public key")
+	var isEcdsa bool
+	var raw []byte
+	switch pub := pubKey.(type) {
+	case *rsa.PublicKey:
+		isEcdsa = false
+		raw = pub.N.Bytes()
+	case *ecdsa.PublicKey:
+		isEcdsa = true
+		raw = pub.X.Bytes()
+		raw = append(raw, pub.Y.Bytes()...)
+	default:
+		return nil, false, fmt.Errorf("unsupported public key type: %T", pub)
 	}
 
-	return rsaPubKey.N, nil
+	return raw, isEcdsa, nil
 }
 
 // CalculateProofIndex calculates the proof index.
@@ -134,4 +159,91 @@ func BigIntToBytes(x string) ([]byte, error) {
 	}
 
 	return bigInt.Bytes(), nil
+}
+
+// HashKey computes the Poseidon hash of 5 elements.
+func HashKey(x509Key []byte) (*big.Int, error) {
+	var decomposed [5]*big.Int
+	position := len(x509Key)
+
+	for i := 0; i < 5; i++ {
+		if position < 24 {
+			return nil, fmt.Errorf("x509Key is too short")
+		}
+
+		element := new(big.Int).SetBytes(x509Key[position-24 : position])
+		reversed := big.NewInt(0)
+
+		for j := 0; j < 3; j++ {
+			extracted := new(big.Int).Rsh(element, uint(j*64))
+			extracted.And(extracted, new(big.Int).SetUint64(0xffffffffffffffff))
+			reversed.Lsh(reversed, 64)
+			reversed.Or(reversed, extracted)
+		}
+
+		decomposed[i] = reversed
+		position -= 24
+	}
+
+	keyHash, err := poseidon.Hash(decomposed[:])
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute Poseidon hash: %v", err)
+	}
+
+	return keyHash, nil
+}
+
+// NormalizeSignature normalizes the signature.
+func NormalizeSignature(signature []byte) ([]byte, error) {
+	if len(signature) != 64 {
+		return signature, nil
+	}
+
+	r := new(big.Int).SetBytes(signature[:len(signature)/2])
+	s := new(big.Int).SetBytes(signature[len(signature)/2:])
+
+	lowSMax, ok := new(big.Int).SetString(lowSMaxHex, 16)
+	if !ok {
+		return nil, fmt.Errorf("error converting lowSMaxHex to big int")
+	}
+
+	n, ok := new(big.Int).SetString(nHex, 16)
+	if !ok {
+		return nil, fmt.Errorf("error converting nHex to big int")
+	}
+
+	if s.Cmp(lowSMax) == 1 {
+		s.Sub(n, s)
+	}
+
+	resultSignature := append(r.Bytes(), s.Bytes()...)
+
+	return resultSignature, nil
+}
+
+type algorithmIdentifier struct {
+	Algorithm  asn1.ObjectIdentifier
+	Parameters ecParameters
+}
+
+type publicKeyInfo struct {
+	Algorithm        algorithmIdentifier
+	SubjectPublicKey asn1.BitString
+}
+
+type ecParameters struct {
+	Version *big.Int
+	FieldID fieldID
+	Curve   curve
+}
+
+type fieldID struct {
+	FieldType asn1.ObjectIdentifier
+	Data      *big.Int
+}
+
+type curve struct {
+	Placeholder asn1.RawContent
+	X           asn1.RawContent
+	Y           asn1.RawContent
 }

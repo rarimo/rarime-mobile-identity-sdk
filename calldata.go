@@ -15,15 +15,18 @@ import (
 // RsaSha12688Hex represents the register data type.
 const RsaSha12688Hex = "ee72172757e0738b89f37b0c9d04d6b9056da936d5e0959e3e8829d8fb91e4eb"
 
-// RsaSha12704Hex represents the register data type
-const RsaSha12704Hex = "4b5153708e847a55cf1cd23a5a828d7d3ef194a6a3d6b9cb957af170f560b016"
+// RsaSha12688TimestampHex represents the register data type.
+const RsaSha12688TimestampHex = "b889e143461475f0ed26836f5d521b7960b904f6e1a14b06754abec6a3f326a2"
+
+// EcdsaSha12704Hex represents the register data type
+const EcdsaSha12704Hex = "2370a10b5e0b6f239856dd28c7b60a91591658322ef67976cf52cabd81a153bc"
 
 // RegistrationMetaData contains all metadata for the Registration contract.
 //
-// Register(identityKey_ *big.Int, dgCommit_ *big.Int, passport_ RegistrationPassport, zkPoints_ VerifierHelperProofPoints)
+// Register(certificatesRoot_ [32]byte, identityKey_ *big.Int, dgCommit_ *big.Int, passport_ RegistrationPassport, zkPoints_ VerifierHelperProofPoints)
 // RegisterCertificate(icaoMerkleProof_ [][32]byte, icaoMemberKey_ []byte, icaoMemberSignature_ []byte, x509SignedAttributes_ []byte, x509KeyOffset_ *big.Int, x509ExpirationOffset_ *big.Int)
 var RegistrationMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"certificateKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"expirationTimestamp\",\"type\":\"uint256\"}],\"name\":\"CertificateRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"certificateKey\",\"type\":\"bytes32\"}],\"name\":\"CertificateRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"passportKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"identityKey\",\"type\":\"bytes32\"}],\"name\":\"Registered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"passportKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"identityKey\",\"type\":\"bytes32\"}],\"name\":\"ReissuedIdentity\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"passportKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"identityKey\",\"type\":\"bytes32\"}],\"name\":\"Revoked\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"ICAO_PREFIX\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"P\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"REVOKED\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"signer_\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"registrationSmt_\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"certificatesSmt_\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"icaoMasterTreeMerkleRoot_\",\"type\":\"bytes32\"}],\"name\":\"__Registration_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"dispatcherType_\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"dispatcher_\",\"type\":\"address\"}],\"name\":\"addDispatcher\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"certificatesSmt\",\"outputs\":[{\"internalType\":\"contractPoseidonSMT\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"newRoot_\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"proof_\",\"type\":\"bytes\"}],\"name\":\"changeICAOMasterTreeRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"newSignerPubKey_\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signature_\",\"type\":\"bytes\"}],\"name\":\"changeSigner\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificateKey_\",\"type\":\"bytes32\"}],\"name\":\"getCertificateInfo\",\"outputs\":[{\"components\":[{\"internalType\":\"uint64\",\"name\":\"expirationTimestamp\",\"type\":\"uint64\"}],\"internalType\":\"structRegistration.CertificateInfo\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"passportKey_\",\"type\":\"bytes32\"}],\"name\":\"getPassportInfo\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"activeIdentity\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"identityReissueCounter\",\"type\":\"uint64\"}],\"internalType\":\"structRegistration.PassportInfo\",\"name\":\"passportInfo_\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"activePassport\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"issueTimestamp\",\"type\":\"uint64\"}],\"internalType\":\"structRegistration.IdentityInfo\",\"name\":\"identityInfo_\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"icaoMasterTreeMerkleRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"newRoot_\",\"type\":\"bytes32\"}],\"name\":\"mockChangeICAOMasterTreeRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"passportDispatchers\",\"outputs\":[{\"internalType\":\"contractIPassportDispatcher\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dgCommit_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"internalType\":\"structRegistration.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256[2]\",\"name\":\"a\",\"type\":\"uint256[2]\"},{\"internalType\":\"uint256[2][2]\",\"name\":\"b\",\"type\":\"uint256[2][2]\"},{\"internalType\":\"uint256[2]\",\"name\":\"c\",\"type\":\"uint256[2]\"}],\"internalType\":\"structVerifierHelper.ProofPoints\",\"name\":\"zkPoints_\",\"type\":\"tuple\"}],\"name\":\"register\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32[]\",\"name\":\"icaoMerkleProof_\",\"type\":\"bytes32[]\"},{\"internalType\":\"bytes\",\"name\":\"icaoMemberKey_\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"icaoMemberSignature_\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"x509SignedAttributes_\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"x509KeyOffset_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"x509ExpirationOffset_\",\"type\":\"uint256\"}],\"name\":\"registerCertificate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"registrationSmt\",\"outputs\":[{\"internalType\":\"contractPoseidonSMT\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dgCommit_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"internalType\":\"structRegistration.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256[2]\",\"name\":\"a\",\"type\":\"uint256[2]\"},{\"internalType\":\"uint256[2][2]\",\"name\":\"b\",\"type\":\"uint256[2][2]\"},{\"internalType\":\"uint256[2]\",\"name\":\"c\",\"type\":\"uint256[2]\"}],\"internalType\":\"structVerifierHelper.ProofPoints\",\"name\":\"zkPoints_\",\"type\":\"tuple\"}],\"name\":\"reissueIdentity\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"dispatcherType_\",\"type\":\"bytes32\"}],\"name\":\"removeDispatcher\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"internalType\":\"structRegistration.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"}],\"name\":\"revoke\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificateKey_\",\"type\":\"bytes32\"}],\"name\":\"revokeCertificate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"signer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"certificateKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"expirationTimestamp\",\"type\":\"uint256\"}],\"name\":\"CertificateRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"certificateKey\",\"type\":\"bytes32\"}],\"name\":\"CertificateRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"passportKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"identityKey\",\"type\":\"bytes32\"}],\"name\":\"Registered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"passportKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"identityKey\",\"type\":\"bytes32\"}],\"name\":\"ReissuedIdentity\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"passportKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"identityKey\",\"type\":\"bytes32\"}],\"name\":\"Revoked\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"ICAO_PREFIX\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"P\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"REVOKED\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"signer_\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"registrationSmt_\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"certificatesSmt_\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"icaoMasterTreeMerkleRoot_\",\"type\":\"bytes32\"}],\"name\":\"__Registration_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"dispatcherType_\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"dispatcher_\",\"type\":\"address\"}],\"name\":\"addDispatcher\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"certificatesSmt\",\"outputs\":[{\"internalType\":\"contractPoseidonSMT\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"newRoot_\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"proof_\",\"type\":\"bytes\"}],\"name\":\"changeICAOMasterTreeRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"newSignerPubKey_\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signature_\",\"type\":\"bytes\"}],\"name\":\"changeSigner\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificateKey_\",\"type\":\"bytes32\"}],\"name\":\"getCertificateInfo\",\"outputs\":[{\"components\":[{\"internalType\":\"uint64\",\"name\":\"expirationTimestamp\",\"type\":\"uint64\"}],\"internalType\":\"structRegistration.CertificateInfo\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"passportKey_\",\"type\":\"bytes32\"}],\"name\":\"getPassportInfo\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"activeIdentity\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"identityReissueCounter\",\"type\":\"uint64\"}],\"internalType\":\"structRegistration.PassportInfo\",\"name\":\"passportInfo_\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"activePassport\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"issueTimestamp\",\"type\":\"uint64\"}],\"internalType\":\"structRegistration.IdentityInfo\",\"name\":\"identityInfo_\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"icaoMasterTreeMerkleRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"newRoot_\",\"type\":\"bytes32\"}],\"name\":\"mockChangeICAOMasterTreeRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"passportDispatchers\",\"outputs\":[{\"internalType\":\"contractIPassportDispatcher\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificatesRoot_\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dgCommit_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"internalType\":\"structRegistration.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256[2]\",\"name\":\"a\",\"type\":\"uint256[2]\"},{\"internalType\":\"uint256[2][2]\",\"name\":\"b\",\"type\":\"uint256[2][2]\"},{\"internalType\":\"uint256[2]\",\"name\":\"c\",\"type\":\"uint256[2]\"}],\"internalType\":\"structVerifierHelper.ProofPoints\",\"name\":\"zkPoints_\",\"type\":\"tuple\"}],\"name\":\"register\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32[]\",\"name\":\"icaoMerkleProof_\",\"type\":\"bytes32[]\"},{\"internalType\":\"bytes\",\"name\":\"icaoMemberKey_\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"icaoMemberSignature_\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"x509SignedAttributes_\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"x509KeyOffset_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"x509ExpirationOffset_\",\"type\":\"uint256\"}],\"name\":\"registerCertificate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"registrationSmt\",\"outputs\":[{\"internalType\":\"contractPoseidonSMT\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificatesRoot_\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dgCommit_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"internalType\":\"structRegistration.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256[2]\",\"name\":\"a\",\"type\":\"uint256[2]\"},{\"internalType\":\"uint256[2][2]\",\"name\":\"b\",\"type\":\"uint256[2][2]\"},{\"internalType\":\"uint256[2]\",\"name\":\"c\",\"type\":\"uint256[2]\"}],\"internalType\":\"structVerifierHelper.ProofPoints\",\"name\":\"zkPoints_\",\"type\":\"tuple\"}],\"name\":\"reissueIdentity\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"dispatcherType_\",\"type\":\"bytes32\"}],\"name\":\"removeDispatcher\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"internalType\":\"structRegistration.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"}],\"name\":\"revoke\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificateKey_\",\"type\":\"bytes32\"}],\"name\":\"revokeCertificate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"signer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // RegistrationPassport represents a registration passport.
@@ -73,8 +76,13 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 	proofJSON []byte,
 	signature []byte,
 	pubKeyPem []byte,
-	encapsulatedContentSize int,
+	certificatesRootRaw []byte,
 ) ([]byte, error) {
+	signature, err := NormalizeSignature(signature)
+	if err != nil {
+		return nil, err
+	}
+
 	zkProof := new(ZkProof)
 	if err := json.Unmarshal(proofJSON, zkProof); err != nil {
 		return nil, err
@@ -131,52 +139,53 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 		C: c,
 	}
 
-	var err error
+	pubKey, isEcdsa, err := pubKeyPemToRaw(pubKeyPem)
+	if err != nil {
+		return nil, err
+	}
+
 	var datatypeBuf []byte
-	switch encapsulatedContentSize {
-	case 2688:
+	if isEcdsa {
+		datatypeBuf, err = hex.DecodeString(EcdsaSha12704Hex)
+	} else {
 		datatypeBuf, err = hex.DecodeString(RsaSha12688Hex)
-		if err != nil {
-			return nil, err
-		}
-	case 2704:
-		datatypeBuf, err = hex.DecodeString(RsaSha12704Hex)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	datatype := [32]byte{}
 	copy(datatype[:], datatypeBuf)
 
-	pubKeyN, err := RsaPubKeyPemToN(pubKeyPem)
-	if err != nil {
-		return nil, err
-	}
-
 	passport := &RegistrationPassport{
 		DataType:  datatype,
-		PublicKey: pubKeyN.Bytes(),
+		PublicKey: pubKey,
 		Signature: signature,
 	}
+
+	var certificatesRoot [32]byte
+	copy(certificatesRoot[:], certificatesRootRaw)
 
 	abi, err := newRegistrationCoder()
 	if err != nil {
 		return nil, err
 	}
 
-	return abi.Pack("register", pkIdentityHash, dg1Commitment, passport, proofPoints)
+	return abi.Pack("register", certificatesRoot, pkIdentityHash, dg1Commitment, passport, proofPoints)
 }
 
 // BuildRegisterCertificateCalldata builds the calldata for the register certificate function.
-func (s *CallDataBuilder) BuildRegisterCertificateCalldata(slavePem []byte, mastersPem []byte) ([]byte, error) {
-	icaoTree, err := mt.BuildTreeFromCollection(mastersPem)
+func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
+	cosmosAddr string,
+	slavePem []byte,
+	mastersPem []byte,
+) ([]byte, error) {
+	icaoTree, err := mt.BuildFromCosmos(cosmosAddr, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build tree from collection: %v", err)
 	}
 
+	fmt.Println("tree built, root: ", hex.EncodeToString(icaoTree.Root()))
+
 	x := X509Util{}
-	_, masterCert, err := x.GetMaster(slavePem, mastersPem)
+	slaveCert, masterCert, err := x.GetMaster(slavePem, mastersPem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get master: %v", err)
 	}
@@ -191,8 +200,8 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(slavePem []byte, mast
 		return nil, fmt.Errorf("failed to generate inclusion proof: %v", err)
 	}
 
-	if !icaoMerkleProof.Existence {
-		return nil, fmt.Errorf("failed to generate inclusion proof: no existence")
+	if len(icaoMerkleProof.Siblings) == 0 {
+		return nil, fmt.Errorf("failed to generate inclusion proof: no siblings")
 	}
 
 	var icaoMemberKey []byte
@@ -203,15 +212,15 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(slavePem []byte, mast
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}
 
-	icaoMemberSignature := masterCert.Signature
-	x509SignedAttributes := masterCert.RawTBSCertificate
+	icaoMemberSignature := slaveCert.Signature
+	x509SignedAttributes := slaveCert.RawTBSCertificate
 
-	x509KeyOffset, err := x.FindKeyPositionInSignedAttributes(masterCert)
+	x509KeyOffset, err := x.FindKeyPositionInSignedAttributes(slaveCert)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find key position in signed attributes: %v", err)
 	}
 
-	x509ExpirationOffset, err := x.FindExpirationPositionInSignedAttributes(masterCert)
+	x509ExpirationOffset, err := x.FindExpirationPositionInSignedAttributes(slaveCert)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find expiration position in signed attributes: %v", err)
 	}

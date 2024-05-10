@@ -27,6 +27,15 @@ func TestCert(t *testing.T) {
 		t.Errorf("failed to get master: %v", err)
 	}
 
+	t.Logf("master signature: %v", hex.EncodeToString(master.Signature))
+
+	masterPem, err := x508Util.CertificateToPem(master)
+	if err != nil {
+		t.Errorf("failed to convert certificate to pem: %v", err)
+	}
+
+	t.Logf("master pem: %v", string(masterPem))
+
 	assert.NotEqual(t, nil, master)
 
 	keyPositionInSignedAttributes, err := x508Util.FindKeyPositionInSignedAttributes(master)
@@ -43,10 +52,12 @@ func TestCert(t *testing.T) {
 
 	t.Logf("expiration position in signed attributes: %v", expirationPositionInSignedAttributes)
 
-	masterCertificateIndex, err := x508Util.GetMasterCertificateIndex(slavePem, mastersPem)
+	masterCertificateIndex, err := x508Util.GetSlaveCertificateIndex(slavePem, mastersPem)
 	if err != nil {
 		t.Errorf("failed to get master certificate index: %v", err)
 	}
+
+	t.Log("master certificate index len : ", len(masterCertificateIndex))
 
 	t.Logf("master certificate index: %v", hex.EncodeToString(masterCertificateIndex))
 }

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/iden3/go-iden3-crypto/poseidon"
 	"github.com/rarimo/certificate-transparency-go/x509"
 )
 
@@ -141,43 +140,25 @@ func (x *X509Util) FindExpirationPositionInSignedAttributes(cert *x509.Certifica
 	return new(big.Int).SetInt64(int64(index)), nil
 }
 
-// GetMasterCertificateIndex returns the index of the master certificate of the slave certificate
-func (x *X509Util) GetMasterCertificateIndex(slavePem []byte, mastersPem []byte) ([]byte, error) {
-	_, masterCert, err := x.GetMaster(slavePem, mastersPem)
+// GetSlaveCertificateIndex returns the index of the master certificate of the slave certificate
+func (x *X509Util) GetSlaveCertificateIndex(slavePem []byte, mastersPem []byte) ([]byte, error) {
+	slaveCert, _, err := x.GetMaster(slavePem, mastersPem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get master: %v", err)
 	}
 
 	var masterModulus []byte
-	switch pub := masterCert.PublicKey.(type) {
+	switch pub := slaveCert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		masterModulus = pub.N.Bytes()
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}
 
-	if len(masterModulus) > 128 {
-		masterModulus = masterModulus[:128]
-	}
-
-	var masterModulusForHashing []*big.Int
-	for i := 0; i < 4; i++ {
-		modulusPart := new(big.Int).SetBytes(masterModulus[i*25 : (i+1)*25])
-		masterModulusForHashing = append(masterModulusForHashing, modulusPart)
-	}
-
-	lastModulusPart := new(big.Int).SetBytes(masterModulus[100:128])
-	masterModulusForHashing = append(masterModulusForHashing, lastModulusPart)
-
-	masterModulusHash, err := poseidon.Hash(masterModulusForHashing)
+	masterCertificateIndex, err := HashKey(masterModulus)
 	if err != nil {
-		return nil, fmt.Errorf("error hashing master modulus: %v", err)
+		return nil, fmt.Errorf("failed to hash key: %v", err)
 	}
 
-	certificateIndex, err := poseidon.Hash([]*big.Int{masterModulusHash})
-	if err != nil {
-		return nil, fmt.Errorf("error hashing master modulus hash: %v", err)
-	}
-
-	return certificateIndex.Bytes(), nil
+	return masterCertificateIndex.Bytes(), nil
 }
