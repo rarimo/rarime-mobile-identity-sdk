@@ -10,14 +10,14 @@ import (
 )
 
 func TestCert(t *testing.T) {
+	mastersPem, err := identity.LoadMasterCertificatesPem("rarimo-temp", "icaopkd-list.ldif")
+	if err != nil {
+		t.Errorf("failed to load master certificates pem: %v", err)
+	}
+
 	slavePem, err := os.ReadFile("assets/slave.pem")
 	if err != nil {
 		t.Errorf("failed to read slave pem: %v", err)
-	}
-
-	mastersPem, err := os.ReadFile("assets/masters.pem")
-	if err != nil {
-		t.Errorf("failed to read masters pem: %v", err)
 	}
 
 	x508Util := identity.X509Util{}

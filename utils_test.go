@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/rarimo/ldif-sdk/ldif"
 	identity "github.com/rarimo/rarime-mobile-identity-sdk"
 	"github.com/stretchr/testify/assert"
 )
@@ -54,4 +55,20 @@ func TestHashKey(t *testing.T) {
 	}
 
 	t.Log(result.Text(10))
+}
+
+func TestLdif(t *testing.T) {
+	value, err := ldif.FromFile("assets/ldif.ldif")
+	if err != nil {
+		t.Error(err)
+	}
+
+	pems := value.ToPem()
+
+	var pem string
+	for _, p := range pems {
+		pem += p
+	}
+
+	t.Log(pem)
 }

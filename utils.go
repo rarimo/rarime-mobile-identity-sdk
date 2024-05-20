@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/x509"
@@ -12,12 +13,30 @@ import (
 
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
+	"github.com/rarimo/ldif-sdk/ldif"
 )
 
 const smartChunking2BlockSize uint64 = 512
 const brainpoolP256CurveOID = "1.2.840.10045.2.1"
 const lowSMaxHex = "54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb"
 const nHex = "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7"
+
+// LoadMasterCertificatesPem loads the master certificates from an LDIF file in an S3 bucket.
+func LoadMasterCertificatesPem(bucketName string, fileName string) ([]byte, error) {
+	masters, err := ldif.FromS3Bucket(context.Background(), bucketName, fileName)
+	if err != nil {
+		return nil, fmt.Errorf("error loading master certificates: %v", err)
+	}
+
+	mastersPemSlice := masters.ToPem()
+
+	var mastersPem []byte
+	for _, masterPem := range mastersPemSlice {
+		mastersPem = append(mastersPem, []byte(masterPem)...)
+	}
+
+	return mastersPem, nil
+}
 
 // NewBJJSecretKey generates a new secret key for the Baby JubJub curve.
 func NewBJJSecretKey() []byte {

@@ -175,14 +175,18 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
 	cosmosAddr string,
 	slavePem []byte,
-	mastersPem []byte,
+	masterCertificatesBucketname string,
+	masterCertificatesFilename string,
 ) ([]byte, error) {
+	mastersPem, err := LoadMasterCertificatesPem(masterCertificatesBucketname, masterCertificatesFilename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load master certificates pem: %v", err)
+	}
+
 	icaoTree, err := mt.BuildFromCosmos(cosmosAddr, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build tree from collection: %v", err)
 	}
-
-	fmt.Println("tree built, root: ", hex.EncodeToString(icaoTree.Root()))
 
 	x := X509Util{}
 	slaveCert, masterCert, err := x.GetMaster(slavePem, mastersPem)
