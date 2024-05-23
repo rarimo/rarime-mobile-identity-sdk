@@ -18,11 +18,14 @@ import (
 	"google.golang.org/grpc/keepalive"
 )
 
+// AirdropStartTimestamp represents the airdrop start timestamp.
+const AirdropStartTimestamp = 1715698750
+
 // AddressPrefix represents the cosmos address prefix.
 const AddressPrefix = "rarimo"
 
-// EventID represents the event ID.
-var EventID, _ = new(big.Int).SetString("ac42d1a986804618c7a793fbe814d9b31e47be51e082806363dca6958f3062", 16)
+// AirdropEventID represents the airdrop event of ID.
+var AirdropEventID, _ = new(big.Int).SetString("ac42d1a986804618c7a793fbe814d9b31e47be51e082806363dca6958f3062", 16)
 
 // RegisterIdentityExp represents RSA exponent.
 var RegisterIdentityExp = []string{"65537", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"}
@@ -150,18 +153,14 @@ func (p *Profile) BuildRegisterIdentityInputs(
 	return inputs.Marshal()
 }
 
-// BuildQueryIdentityInputs builds the inputs for the queryIdentity circuit.
-func (p *Profile) BuildQueryIdentityInputs(
+// BuildAirdropQueryIdentityInputs builds the inputs for the queryIdentity circuit.
+func (p *Profile) BuildAirdropQueryIdentityInputs(
 	dg1 []byte,
 	smtProofJSON []byte,
 	selector string,
 	pkPassportHash string,
 	issueTimestamp string,
 	identityCounter string,
-	timestampLowerbound string,
-	timestampUpperbound string,
-	identityCounterLowerbound string,
-	identityCounterUpperbound string,
 ) ([]byte, error) {
 	var smtProof SMTProof
 	if err := json.Unmarshal(smtProofJSON, &smtProof); err != nil {
@@ -182,9 +181,37 @@ func (p *Profile) BuildQueryIdentityInputs(
 
 	decodedAddressInt := new(big.Int).SetBytes(decodedAddress)
 
+	issueTimestampInt, err := strconv.ParseInt(issueTimestamp, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing issue timestamp: %v", err)
+	}
+
+	var timestampLowerbound int64
+	var timestampUpperbound int64
+	if issueTimestampInt > AirdropStartTimestamp {
+		timestampLowerbound = 0
+		timestampUpperbound = issueTimestampInt + 1
+	} else {
+		timestampLowerbound = issueTimestampInt
+		timestampUpperbound = AirdropStartTimestamp
+	}
+
+	identityCounterInt, err := strconv.ParseInt(identityCounter, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing identity counter: %v", err)
+	}
+
+	identityCounterUpperbound := identityCounterInt + 1
+
+	currentDate := time.Now().UTC()
+
+	expirationDateLowerbound := "0x" + hex.EncodeToString([]byte(currentDate.Format("020106")))
+
+	birthDateUpperbound := "0x" + hex.EncodeToString([]byte(currentDate.AddDate(-18, 0, 0).Format("020106")))
+
 	inputs := &QueryIdentityInputs{
 		Dg1:                       ByteArrayToBits(dg1),
-		EventID:                   EventID.String(),
+		EventID:                   AirdropEventID.String(),
 		EventData:                 decodedAddressInt.String(),
 		IDStateRoot:               idStateRoot,
 		IDStateSiblings:           idStateSiblings,
@@ -193,14 +220,14 @@ func (p *Profile) BuildQueryIdentityInputs(
 		SkIdentity:                p.secretKey.BigInt().String(),
 		Timestamp:                 issueTimestamp,
 		IdentityCounter:           identityCounter,
-		TimestampLowerbound:       "0",
-		TimestampUpperbound:       "0",
-		IdentityCounterLowerbound: identityCounterLowerbound,
-		IdentityCounterUpperbound: identityCounterUpperbound,
-		BirthDateLowerbound:       "0x303030303030",
-		BirthDateUpperbound:       "0x303030303030",
-		ExpirationDateLowerbound:  "0x303030303030",
+		TimestampLowerbound:       strconv.FormatInt(timestampLowerbound, 10),
+		TimestampUpperbound:       strconv.FormatInt(timestampUpperbound, 10),
+		IdentityCounterLowerbound: "0",
+		IdentityCounterUpperbound: strconv.FormatInt(identityCounterUpperbound, 10),
+		ExpirationDateLowerbound:  expirationDateLowerbound,
 		ExpirationDateUpperbound:  "0x303030303030",
+		BirthDateLowerbound:       "0x303030303030",
+		BirthDateUpperbound:       birthDateUpperbound,
 		CitizenshipMask:           "0x303030303030",
 	}
 
@@ -258,4 +285,21 @@ func (p *Profile) WalletSend(toAddr string, amount string, chainID string, denom
 	}
 
 	return txResp, nil
+}
+
+// CalculateAirdropEventNullifier calculates the event nullifier.
+func (p *Profile) CalculateAirdropEventNullifier() (string, error) {
+	secretKey := p.secretKey.BigInt()
+
+	secretKeyHash, err := poseidon.Hash([]*big.Int{secretKey})
+	if err != nil {
+		return "", fmt.Errorf("error hashing secret key: %v", err)
+	}
+
+	airdropEventNullifier, err := poseidon.Hash([]*big.Int{secretKey, secretKeyHash, AirdropEventID})
+	if err != nil {
+		return "", fmt.Errorf("error hashing airdrop event: %v", err)
+	}
+
+	return airdropEventNullifier.String(), nil
 }
