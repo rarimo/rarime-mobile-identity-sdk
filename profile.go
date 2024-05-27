@@ -18,14 +18,8 @@ import (
 	"google.golang.org/grpc/keepalive"
 )
 
-// AirdropStartTimestamp represents the airdrop start timestamp.
-const AirdropStartTimestamp = 1715698750
-
 // AddressPrefix represents the cosmos address prefix.
 const AddressPrefix = "rarimo"
-
-// AirdropEventID represents the airdrop event of ID.
-var AirdropEventID, _ = new(big.Int).SetString("ac42d1a986804618c7a793fbe814d9b31e47be51e082806363dca6958f3062", 16)
 
 // RegisterIdentityExp represents RSA exponent.
 var RegisterIdentityExp = []string{"65537", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"}
@@ -161,6 +155,8 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 	pkPassportHash string,
 	issueTimestamp string,
 	identityCounter string,
+	eventID string,
+	startedAt int64,
 ) ([]byte, error) {
 	var smtProof SMTProof
 	if err := json.Unmarshal(smtProofJSON, &smtProof); err != nil {
@@ -188,12 +184,12 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 
 	var timestampLowerbound int64
 	var timestampUpperbound int64
-	if issueTimestampInt > AirdropStartTimestamp {
+	if issueTimestampInt > startedAt {
 		timestampLowerbound = 0
 		timestampUpperbound = issueTimestampInt + 1
 	} else {
 		timestampLowerbound = issueTimestampInt
-		timestampUpperbound = AirdropStartTimestamp
+		timestampUpperbound = startedAt
 	}
 
 	identityCounterInt, err := strconv.ParseInt(identityCounter, 10, 64)
@@ -211,7 +207,7 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 
 	inputs := &QueryIdentityInputs{
 		Dg1:                       ByteArrayToBits(dg1),
-		EventID:                   AirdropEventID.String(),
+		EventID:                   eventID,
 		EventData:                 decodedAddressInt.String(),
 		IDStateRoot:               idStateRoot,
 		IDStateSiblings:           idStateSiblings,
@@ -288,7 +284,7 @@ func (p *Profile) WalletSend(toAddr string, amount string, chainID string, denom
 }
 
 // CalculateAirdropEventNullifier calculates the event nullifier.
-func (p *Profile) CalculateAirdropEventNullifier() (string, error) {
+func (p *Profile) CalculateAirdropEventNullifier(eventID string) (string, error) {
 	secretKey := p.secretKey.BigInt()
 
 	secretKeyHash, err := poseidon.Hash([]*big.Int{secretKey})
@@ -296,7 +292,12 @@ func (p *Profile) CalculateAirdropEventNullifier() (string, error) {
 		return "", fmt.Errorf("error hashing secret key: %v", err)
 	}
 
-	airdropEventNullifier, err := poseidon.Hash([]*big.Int{secretKey, secretKeyHash, AirdropEventID})
+	airdropEventID, ok := new(big.Int).SetString(eventID, 10)
+	if !ok {
+		return "", fmt.Errorf("error parsing airdrop event ID: %v", err)
+	}
+
+	airdropEventNullifier, err := poseidon.Hash([]*big.Int{secretKey, secretKeyHash, airdropEventID})
 	if err != nil {
 		return "", fmt.Errorf("error hashing airdrop event: %v", err)
 	}
