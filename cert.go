@@ -114,14 +114,20 @@ func (x *X509Util) BuildPartialRegistrationCircuitInputs(slavePem []byte, master
 func (x *X509Util) FindKeyPositionInSignedAttributes(cert *x509.Certificate) (*big.Int, error) {
 	signedAttributes := cert.RawTBSCertificate
 
-	index := bytes.Index(signedAttributes, PubKeyANS1Prefix)
+	var publicKey []byte
+	switch pub := cert.PublicKey.(type) {
+	case *rsa.PublicKey:
+		publicKey = pub.N.Bytes()
+	default:
+		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+	}
+
+	index := bytes.Index(signedAttributes, publicKey)
 	if index == -1 {
 		return nil, errors.New("subarray not found in array")
 	}
 
-	result := new(big.Int).SetInt64(int64(index + len(PubKeyANS1Prefix)))
-
-	return result, nil
+	return new(big.Int).SetInt64(int64(index)), nil
 }
 
 // FindExpirationPositionInSignedAttributes finds the position of the expiration date in the signed attributes
