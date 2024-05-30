@@ -77,6 +77,7 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 	signature []byte,
 	pubKeyPem []byte,
 	certificatesRootRaw []byte,
+	isRevoced bool,
 ) ([]byte, error) {
 	signature, err := NormalizeSignature(signature)
 	if err != nil {
@@ -168,7 +169,14 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 		return nil, err
 	}
 
-	return abi.Pack("register", certificatesRoot, pkIdentityHash, dg1Commitment, passport, proofPoints)
+	var methodName string
+	if isRevoced {
+		methodName = "reissueIdentity"
+	} else {
+		methodName = "register"
+	}
+
+	return abi.Pack(methodName, certificatesRoot, pkIdentityHash, dg1Commitment, passport, proofPoints)
 }
 
 // BuildRegisterCertificateCalldata builds the calldata for the register certificate function.
@@ -242,4 +250,41 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
 	}
 
 	return abi.Pack("registerCertificate", icaoMerkleProofSiblings, icaoMemberKey, icaoMemberSignature, x509SignedAttributes, x509KeyOffset, x509ExpirationOffset)
+}
+
+// BuildRevoceCalldata builds the calldata for the revoke function.
+func (s *CallDataBuilder) BuildRevoceCalldata(
+	identityKey []byte,
+	signature []byte,
+	pubKeyPem []byte,
+) ([]byte, error) {
+	pubKey, isEcdsa, err := pubKeyPemToRaw(pubKeyPem)
+	if err != nil {
+		return nil, err
+	}
+
+	var datatypeBuf []byte
+	if isEcdsa {
+		datatypeBuf, err = hex.DecodeString(EcdsaSha12704Hex)
+	} else {
+		datatypeBuf, err = hex.DecodeString(RsaSha12688Hex)
+	}
+
+	datatype := [32]byte{}
+	copy(datatype[:], datatypeBuf)
+
+	identityKeyInt := new(big.Int).SetBytes(identityKey)
+
+	passport := &RegistrationPassport{
+		DataType:  datatype,
+		PublicKey: pubKey,
+		Signature: signature,
+	}
+
+	abi, err := newRegistrationCoder()
+	if err != nil {
+		return nil, err
+	}
+
+	return abi.Pack("revoke", identityKeyInt, passport)
 }
