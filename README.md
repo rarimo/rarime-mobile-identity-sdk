@@ -13,5 +13,5 @@ Rarime Mobile Identity SDK is a mobile SDK that provides a simple way to integra
 Run the following command to apply the compiler patch:
 
 ```bash
-sudo ./build/patch.sh
+./build/patch.sh
 ```

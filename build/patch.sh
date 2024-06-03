@@ -8,8 +8,7 @@ if [ "$version" != "1.22.3" ]; then
 fi
 
 if [ ! -d "go" ]; then
-    git clone git@github.com:golang/go.git
-    git reset --hard adbfb672ba485630d75f8b5598228a63f4af08a4
+    git clone -b fix/bind git@github.com:rarimo/go.git
 fi
 
 cd go/src
@@ -18,4 +17,4 @@ if [ ! -f "../pkg/tool/darwin_arm64/cgo" ]; then
     ./make.bash
 fi
 
-mv ../pkg/tool/darwin_arm64/cgo /usr/local/go/pkg/tool/darwin_arm64/cgo
+sudo mv ../pkg/tool/darwin_arm64/cgo /usr/local/go/pkg/tool/darwin_arm64/cgo
