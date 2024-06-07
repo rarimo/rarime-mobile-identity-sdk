@@ -201,9 +201,9 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 
 	currentDate := time.Now().UTC()
 
-	expirationDateLowerbound := "0x" + hex.EncodeToString([]byte(currentDate.Format("020106")))
+	expirationDateLowerbound := "0x" + hex.EncodeToString([]byte(currentDate.Format("060102")))
 
-	birthDateUpperbound := "0x" + hex.EncodeToString([]byte(currentDate.AddDate(-18, 0, 0).Format("020106")))
+	birthDateUpperbound := "0x" + hex.EncodeToString([]byte(currentDate.AddDate(-18, 0, 0).Format("060102")))
 
 	inputs := &QueryIdentityInputs{
 		Dg1:                       ByteArrayToBits(dg1),
