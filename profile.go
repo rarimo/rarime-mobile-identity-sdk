@@ -292,7 +292,11 @@ func (p *Profile) CalculateEventNullifier(eventID string) (string, error) {
 		return "", fmt.Errorf("error hashing secret key: %v", err)
 	}
 
-	eventIDInt, ok := new(big.Int).SetString(eventID, 10)
+	if eventID[:2] == "0x" {
+		eventID = eventID[2:]
+	}
+
+	eventIDInt, ok := new(big.Int).SetString(eventID, 16)
 	if !ok {
 		return "", fmt.Errorf("error parsing event ID: %v", err)
 	}
@@ -302,5 +306,5 @@ func (p *Profile) CalculateEventNullifier(eventID string) (string, error) {
 		return "", fmt.Errorf("error hashing event: %v", err)
 	}
 
-	return airdropEventNullifier.String(), nil
+	return airdropEventNullifier.Text(16), nil
 }
