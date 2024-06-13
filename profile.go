@@ -283,8 +283,8 @@ func (p *Profile) WalletSend(toAddr string, amount string, chainID string, denom
 	return txResp, nil
 }
 
-// CalculateAirdropEventNullifier calculates the event nullifier.
-func (p *Profile) CalculateAirdropEventNullifier(eventID string) (string, error) {
+// CalculateEventNullifier calculates the event nullifier.
+func (p *Profile) CalculateEventNullifier(eventID string) (string, error) {
 	secretKey := p.secretKey.BigInt()
 
 	secretKeyHash, err := poseidon.Hash([]*big.Int{secretKey})
@@ -292,14 +292,14 @@ func (p *Profile) CalculateAirdropEventNullifier(eventID string) (string, error)
 		return "", fmt.Errorf("error hashing secret key: %v", err)
 	}
 
-	airdropEventID, ok := new(big.Int).SetString(eventID, 10)
+	eventIDInt, ok := new(big.Int).SetString(eventID, 10)
 	if !ok {
-		return "", fmt.Errorf("error parsing airdrop event ID: %v", err)
+		return "", fmt.Errorf("error parsing event ID: %v", err)
 	}
 
-	airdropEventNullifier, err := poseidon.Hash([]*big.Int{secretKey, secretKeyHash, airdropEventID})
+	airdropEventNullifier, err := poseidon.Hash([]*big.Int{secretKey, secretKeyHash, eventIDInt})
 	if err != nil {
-		return "", fmt.Errorf("error hashing airdrop event: %v", err)
+		return "", fmt.Errorf("error hashing event: %v", err)
 	}
 
 	return airdropEventNullifier.String(), nil
