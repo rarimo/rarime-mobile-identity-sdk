@@ -292,11 +292,7 @@ func (p *Profile) calculateEventNullifier(eventID string) (*big.Int, error) {
 		return nil, fmt.Errorf("error hashing secret key: %v", err)
 	}
 
-	if eventID[:2] == "0x" {
-		eventID = eventID[2:]
-	}
-
-	eventIDInt, ok := new(big.Int).SetString(eventID, 16)
+	eventIDInt, ok := new(big.Int).SetString(eventID, 0)
 	if !ok {
 		return nil, fmt.Errorf("error parsing event ID: %v", err)
 	}
