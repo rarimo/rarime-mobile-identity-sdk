@@ -283,13 +283,13 @@ func (p *Profile) WalletSend(toAddr string, amount string, chainID string, denom
 	return txResp, nil
 }
 
-// CalculateEventNullifier calculates the event nullifier.
-func (p *Profile) CalculateEventNullifier(eventID string) (string, error) {
+// calculateEventNullifier calculates the event nullifier.
+func (p *Profile) calculateEventNullifier(eventID string) (*big.Int, error) {
 	secretKey := p.secretKey.BigInt()
 
 	secretKeyHash, err := poseidon.Hash([]*big.Int{secretKey})
 	if err != nil {
-		return "", fmt.Errorf("error hashing secret key: %v", err)
+		return nil, fmt.Errorf("error hashing secret key: %v", err)
 	}
 
 	if eventID[:2] == "0x" {
@@ -298,13 +298,33 @@ func (p *Profile) CalculateEventNullifier(eventID string) (string, error) {
 
 	eventIDInt, ok := new(big.Int).SetString(eventID, 16)
 	if !ok {
-		return "", fmt.Errorf("error parsing event ID: %v", err)
+		return nil, fmt.Errorf("error parsing event ID: %v", err)
 	}
 
-	airdropEventNullifier, err := poseidon.Hash([]*big.Int{secretKey, secretKeyHash, eventIDInt})
+	eventNullifier, err := poseidon.Hash([]*big.Int{secretKey, secretKeyHash, eventIDInt})
 	if err != nil {
-		return "", fmt.Errorf("error hashing event: %v", err)
+		return nil, fmt.Errorf("error hashing event: %v", err)
 	}
 
-	return airdropEventNullifier.Text(16), nil
+	return eventNullifier, nil
+}
+
+// CalculateEventNullifierHex calculates the event nullifier in hex.
+func (p *Profile) CalculateEventNullifierHex(eventID string) (string, error) {
+	eventNullifier, err := p.calculateEventNullifier(eventID)
+	if err != nil {
+		return "", fmt.Errorf("error calculating event nullifier: %v", err)
+	}
+
+	return eventNullifier.Text(16), nil
+}
+
+// CalculateEventNullifierInt calculates the event nullifier in hex.
+func (p *Profile) CalculateEventNullifierInt(eventID string) (string, error) {
+	eventNullifier, err := p.calculateEventNullifier(eventID)
+	if err != nil {
+		return "", fmt.Errorf("error calculating event nullifier: %v", err)
+	}
+
+	return eventNullifier.String(), nil
 }
