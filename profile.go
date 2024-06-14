@@ -312,7 +312,12 @@ func (p *Profile) CalculateEventNullifierHex(eventID string) (string, error) {
 		return "", fmt.Errorf("error calculating event nullifier: %v", err)
 	}
 
-	return eventNullifier.Text(16), nil
+	eventNullifierHex := hex.EncodeToString(eventNullifier.Bytes())
+	if len(eventNullifierHex) < 64 {
+		eventNullifierHex = fmt.Sprintf("%0*s", 64, eventNullifierHex)
+	}
+
+	return fmt.Sprintf("0x%s", eventNullifierHex), nil
 }
 
 // CalculateEventNullifierInt calculates the event nullifier in hex.
