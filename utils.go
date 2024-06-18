@@ -61,14 +61,14 @@ func ByteArrayToBits(bytes []byte) []int64 {
 //
 // It does its best to split the big.Int into chunks of 8 bytes,
 // but it may not be perfect though it smart (I heard... do not believe everything you hear).
-func SmartChunking(x *big.Int) []string {
+func SmartChunking(x *big.Int, chunksNumber int) []string {
 	var res []string
 
 	mod := big.NewInt(1)
 	for i := 0; i < 64; i++ {
 		mod.Mul(mod, big.NewInt(2))
 	}
-	for i := 0; i < 64; i++ {
+	for i := 0; i < chunksNumber; i++ {
 		chunk := new(big.Int).Mod(x, mod)
 
 		res = append(res, chunk.String())
@@ -238,6 +238,14 @@ func NormalizeSignature(signature []byte) ([]byte, error) {
 	resultSignature := append(r.Bytes(), s.Bytes()...)
 
 	return resultSignature, nil
+}
+
+func calculateSmartChunkingNumber(bytesNumber int) int {
+	if bytesNumber == 2048 {
+		return 32
+	}
+
+	return 64
 }
 
 type algorithmIdentifier struct {

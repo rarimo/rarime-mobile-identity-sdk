@@ -21,9 +21,6 @@ import (
 // AddressPrefix represents the cosmos address prefix.
 const AddressPrefix = "rarimo"
 
-// RegisterIdentityExp represents RSA exponent.
-var RegisterIdentityExp = []string{"65537", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"}
-
 // IcaoMerkleRoot represents the ICAO merkle root.
 var IcaoMerkleRoot, _ = new(big.Int).SetString("2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45", 16)
 
@@ -91,7 +88,6 @@ func (p *Profile) BuildRegisterIdentityInputs(
 	dg15 []byte,
 	pubKeyPem []byte,
 	signature []byte,
-	isEcdsaActiveAuthentication bool,
 	certificatesSMTProofJSON []byte,
 ) ([]byte, error) {
 	var certificatesSMTProof SMTProof
@@ -106,22 +102,6 @@ func (p *Profile) BuildRegisterIdentityInputs(
 
 	signatureInt := new(big.Int).SetBytes(signature)
 
-	signedAttributesSize := len(signedAttributes) * 8
-
-	var SaTimestampEnabled string
-	if signedAttributesSize == 832 {
-		SaTimestampEnabled = "1"
-	} else {
-		SaTimestampEnabled = "0"
-	}
-
-	var EcdsaShiftEnabled string
-	if isEcdsaActiveAuthentication {
-		EcdsaShiftEnabled = "1"
-	} else {
-		EcdsaShiftEnabled = "0"
-	}
-
 	slaveMerleRoot := new(big.Int).SetBytes(certificatesSMTProof.Root).String()
 
 	var slaveMerkleInclusionBranches []string
@@ -129,19 +109,18 @@ func (p *Profile) BuildRegisterIdentityInputs(
 		slaveMerkleInclusionBranches = append(slaveMerkleInclusionBranches, new(big.Int).SetBytes(sibling).String())
 	}
 
+	smartChunkingNumber := calculateSmartChunkingNumber(len(rsaPubKeyN) * 8)
+
 	inputs := &RegisterIdentityInputs{
 		SkIdentity:                   p.secretKey.BigInt().String(),
 		EncapsulatedContent:          SmartChunking2(ByteArrayToBits(encapsulatedContent), 6),
 		SignedAttributes:             SmartChunking2(ByteArrayToBits(signedAttributes), 2),
-		Sign:                         SmartChunking(signatureInt),
-		Modulus:                      SmartChunking(new(big.Int).SetBytes(rsaPubKeyN)),
-		Exp:                          RegisterIdentityExp,
+		Sign:                         SmartChunking(signatureInt, smartChunkingNumber),
+		Modulus:                      SmartChunking(new(big.Int).SetBytes(rsaPubKeyN), smartChunkingNumber),
 		Dg1:                          SmartChunking2(ByteArrayToBits(dg1), 2),
 		Dg15:                         SmartChunking2(ByteArrayToBits(dg15), 6),
 		SlaveMerleRoot:               slaveMerleRoot,
 		SlaveMerkleInclusionBranches: slaveMerkleInclusionBranches,
-		EcdsaShiftEnabled:            EcdsaShiftEnabled,
-		SaTimestampEnabled:           SaTimestampEnabled,
 	}
 
 	return inputs.Marshal()

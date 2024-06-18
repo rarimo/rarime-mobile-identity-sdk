@@ -103,8 +103,8 @@ func (x *X509Util) BuildPartialRegistrationCircuitInputs(slavePem []byte, master
 
 	inputs := &PassportCertificateInputs{
 		SlaveSignedAttributes: ByteArrayToBits(slaveSignedAttributes),
-		SlaveSignature:        SmartChunking(new(big.Int).SetBytes(slaveSignature)),
-		MasterModulus:         SmartChunking(new(big.Int).SetBytes(masterModulus)),
+		SlaveSignature:        SmartChunking(new(big.Int).SetBytes(slaveSignature), 64),
+		MasterModulus:         SmartChunking(new(big.Int).SetBytes(masterModulus), 64),
 	}
 
 	return inputs, nil

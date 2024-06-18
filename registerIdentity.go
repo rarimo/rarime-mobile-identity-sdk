@@ -9,13 +9,10 @@ type RegisterIdentityInputs struct {
 	SignedAttributes             []int64  `json:"signedAttributes"`
 	Sign                         []string `json:"sign"`
 	Modulus                      []string `json:"modulus"`
-	Exp                          []string `json:"exp"`
 	Dg1                          []int64  `json:"dg1"`
 	Dg15                         []int64  `json:"dg15"`
 	SlaveMerleRoot               string   `json:"slaveMerkleRoot"`
 	SlaveMerkleInclusionBranches []string `json:"slaveMerkleInclusionBranches"`
-	EcdsaShiftEnabled            string   `json:"ecdsaShiftEnabled"`
-	SaTimestampEnabled           string   `json:"saTimestampEnabled"`
 }
 
 // Marshal returns the JSON representation of the inputs.
