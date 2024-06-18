@@ -27,7 +27,7 @@ func TestBuildRegisterCalldata(t *testing.T) {
 
 	builder := &identity.CallDataBuilder{}
 
-	calldata, err := builder.BuildRegisterCalldata(proofJson, signature, pubKeyPem, []byte{}, false)
+	calldata, err := builder.BuildRegisterCalldata(proofJson, signature, pubKeyPem, []byte{}, 4096, false)
 	if err != nil {
 		t.Fatal(err)
 	}

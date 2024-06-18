@@ -168,3 +168,13 @@ func (x *X509Util) GetSlaveCertificateIndex(slavePem []byte, mastersPem []byte) 
 
 	return masterCertificateIndex.Bytes(), nil
 }
+
+// GetRSASize returns the size of the RSA key
+func (x *X509Util) GetRSASize(pubKeyPem []byte) (int, error) {
+	rsaPubKeyN, _, err := pubKeyPemToRaw(pubKeyPem)
+	if err != nil {
+		return 0, fmt.Errorf("error parsing public key: %v", err)
+	}
+
+	return len(rsaPubKeyN) * 8, nil
+}

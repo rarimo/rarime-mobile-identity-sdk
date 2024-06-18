@@ -36,7 +36,7 @@ func TestSmartChunking(t *testing.T) {
 		t.Error("Error parsing big int")
 	}
 
-	res := identity.SmartChunking(bi)
+	res := identity.SmartChunking(bi, 64)
 
 	t.Log(res)
 
