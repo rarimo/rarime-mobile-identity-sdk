@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"github.com/rarimo/zkp-iden3-exposer/client"
 	"github.com/rarimo/zkp-iden3-exposer/wallet"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -225,7 +227,9 @@ func (p *Profile) WalletSend(toAddr string, amount string, chainID string, denom
 
 	grpcClient, err := grpc.Dial(
 		rpcIP,
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
+			MinVersion: tls.VersionTLS13,
+		})),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:    10 * time.Second, // wait time before ping if no activity
 			Timeout: 20 * time.Second, // ping timeout
