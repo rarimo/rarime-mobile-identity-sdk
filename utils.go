@@ -248,6 +248,23 @@ func calculateSmartChunkingNumber(bytesNumber int) int {
 	return 64
 }
 
+// CalculateHmacMessage calculates the HMAC message.
+func CalculateHmacMessage(nullifierRaw string, country string) ([]byte, error) {
+	nullifier, ok := new(big.Int).SetString(nullifierRaw, 0)
+	if !ok {
+		return nil, fmt.Errorf("error converting nullifier hex to big int")
+	}
+
+	countryBytes := []byte(country)
+
+	hash, err := poseidon.Hash([]*big.Int{nullifier, new(big.Int).SetBytes(countryBytes)})
+	if err != nil {
+		return nil, fmt.Errorf("error hashing nullifier and country: %v", err)
+	}
+
+	return hash.Bytes(), nil
+}
+
 type algorithmIdentifier struct {
 	Algorithm  asn1.ObjectIdentifier
 	Parameters ecParameters
