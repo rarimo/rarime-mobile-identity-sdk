@@ -257,12 +257,10 @@ func CalculateHmacMessage(nullifierRaw string, country string) ([]byte, error) {
 
 	countryBytes := []byte(country)
 
-	hash, err := poseidon.Hash([]*big.Int{nullifier, new(big.Int).SetBytes(countryBytes)})
-	if err != nil {
-		return nil, fmt.Errorf("error hashing nullifier and country: %v", err)
-	}
+	var result []byte
+	result = append(nullifier.Bytes(), countryBytes...)
 
-	return hash.Bytes(), nil
+	return result, nil
 }
 
 type algorithmIdentifier struct {
