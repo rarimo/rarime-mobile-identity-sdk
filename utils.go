@@ -249,7 +249,7 @@ func calculateSmartChunkingNumber(bytesNumber int) int {
 }
 
 // CalculateHmacMessage calculates the HMAC message.
-func CalculateHmacMessage(nullifierRaw string, country string) ([]byte, error) {
+func CalculateHmacMessage(nullifierRaw string, country string, anonymousID []byte) ([]byte, error) {
 	nullifier, ok := new(big.Int).SetString(nullifierRaw, 0)
 	if !ok {
 		return nil, fmt.Errorf("error converting nullifier hex to big int")
@@ -259,8 +259,31 @@ func CalculateHmacMessage(nullifierRaw string, country string) ([]byte, error) {
 
 	var result []byte
 	result = append(nullifier.Bytes(), countryBytes...)
+	result = append(result, anonymousID...)
 
 	return result, nil
+}
+
+// CalculateAnonymousID calculates the anonymous ID.
+func CalculateAnonymousID(dg1 []byte, eventID string) ([]byte, error) {
+	dg1Int := new(big.Int).SetBytes(dg1)
+
+	dg1Hash, err := poseidon.Hash([]*big.Int{dg1Int})
+	if err != nil {
+		return nil, fmt.Errorf("error hashing dg1: %v", err)
+	}
+
+	eventIDInt, ok := new(big.Int).SetString(eventID, 0)
+	if !ok {
+		return nil, fmt.Errorf("error parsing event ID: %v", err)
+	}
+
+	anonymousID, err := poseidon.Hash([]*big.Int{dg1Int, dg1Hash, eventIDInt})
+	if err != nil {
+		return nil, fmt.Errorf("error hashing anonymous ID: %v", err)
+	}
+
+	return anonymousID.Bytes(), nil
 }
 
 type algorithmIdentifier struct {
