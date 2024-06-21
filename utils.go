@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/asn1"
 	"encoding/binary"
@@ -266,24 +267,16 @@ func CalculateHmacMessage(nullifierRaw string, country string, anonymousID []byt
 
 // CalculateAnonymousID calculates the anonymous ID.
 func CalculateAnonymousID(dg1 []byte, eventID string) ([]byte, error) {
-	dg1Int := new(big.Int).SetBytes(dg1)
-
-	dg1Hash, err := poseidon.Hash([]*big.Int{dg1Int})
-	if err != nil {
-		return nil, fmt.Errorf("error hashing dg1: %v", err)
-	}
-
 	eventIDInt, ok := new(big.Int).SetString(eventID, 0)
 	if !ok {
-		return nil, fmt.Errorf("error parsing event ID: %v", err)
+		return nil, fmt.Errorf("error converting event ID hex to big int")
 	}
 
-	anonymousID, err := poseidon.Hash([]*big.Int{dg1Int, dg1Hash, eventIDInt})
-	if err != nil {
-		return nil, fmt.Errorf("error hashing anonymous ID: %v", err)
-	}
+	sha256Hash := sha256.New()
+	sha256Hash.Write(dg1)
+	sha256Hash.Write(eventIDInt.Bytes())
 
-	return anonymousID.Bytes(), nil
+	return sha256Hash.Sum(nil), nil
 }
 
 type algorithmIdentifier struct {
