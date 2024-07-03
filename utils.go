@@ -233,10 +233,13 @@ func NormalizeSignature(signature []byte) ([]byte, error) {
 	}
 
 	if s.Cmp(lowSMax) == 1 {
-		s.Sub(n, s)
+		s = s.Sub(n, s)
 	}
 
-	resultSignature := append(r.Bytes(), s.Bytes()...)
+	resR := make([]byte, 32)
+	resS := make([]byte, 32)
+
+	resultSignature := append(r.FillBytes(resR), s.FillBytes(resS)...)
 
 	return resultSignature, nil
 }
