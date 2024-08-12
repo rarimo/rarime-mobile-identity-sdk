@@ -354,6 +354,11 @@ func (s *CallDataBuilder) BuildRevoceCalldata(
 	signature []byte,
 	pubKeyPem []byte,
 ) ([]byte, error) {
+	signature, err := NormalizeSignature(signature)
+	if err != nil {
+		return nil, err
+	}
+
 	var datatypeBuf []byte
 	var pubKey []byte
 	if len(pubKeyPem) == 0 {
