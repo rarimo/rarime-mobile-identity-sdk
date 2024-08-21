@@ -113,6 +113,11 @@ func (p *Profile) BuildRegisterIdentityInputs(
 
 	smartChunkingNumber := calculateSmartChunkingNumber(len(rsaPubKeyN) * 8)
 
+	// TODO - implement SmartChunking3 and handle code below there
+	if uint64(len(dg15)*8+65) > smartChunking2BlockSize*6 {
+		return nil, fmt.Errorf("dg15 is too long, current: %v, max: %v", len(dg15)*8, smartChunking2BlockSize*6-65)
+	}
+
 	inputs := &RegisterIdentityInputs{
 		SkIdentity:                   p.secretKey.BigInt().String(),
 		EncapsulatedContent:          SmartChunking2(ByteArrayToBits(encapsulatedContent), 6),
