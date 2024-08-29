@@ -221,6 +221,104 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 	return json, nil
 }
 
+// BuildAirdropQueryIdentityInputs builds the inputs for the queryIdentity circuit.
+func (p *Profile) BuildQueryIdentityInputs(
+	dg1 []byte,
+	smtProofJSON []byte,
+	selector string,
+	pkPassportHash string,
+	issueTimestamp string,
+	identityCounter string,
+	eventID string,
+	startedAt int64,
+
+	TimestampLowerbound string,
+	TimestampUpperbound string,
+	IdentityCounterLowerbound string,
+	IdentityCounterUpperbound string,
+	ExpirationDateLowerbound string,
+	ExpirationDateUpperbound string,
+	BirthDateLowerbound string,
+	BirthDateUpperbound string,
+	CitizenshipMask string,
+) ([]byte, error) {
+	var smtProof SMTProof
+	if err := json.Unmarshal(smtProofJSON, &smtProof); err != nil {
+		return nil, fmt.Errorf("error unmarshalling id state siblings: %v", err)
+	}
+
+	idStateRoot := new(big.Int).SetBytes(smtProof.Root).String()
+
+	var idStateSiblings []string
+	for _, sibling := range smtProof.Siblings {
+		idStateSiblings = append(idStateSiblings, new(big.Int).SetBytes(sibling).String())
+	}
+
+	_, decodedAddress, err := bech32.Decode(p.wallet.Address)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding address: %v", err)
+	}
+
+	decodedAddressInt := new(big.Int).SetBytes(decodedAddress)
+
+	//issueTimestampInt, err := strconv.ParseInt(issueTimestamp, 10, 64)
+	//if err != nil {
+	//	return nil, fmt.Errorf("error parsing issue timestamp: %v", err)
+	//}
+
+	//var timestampLowerbound int64
+	//var timestampUpperbound int64
+	//if issueTimestampInt > startedAt {
+	//	timestampLowerbound = 0
+	//	timestampUpperbound = issueTimestampInt + 1
+	//} else {
+	//	timestampLowerbound = issueTimestampInt
+	//	timestampUpperbound = startedAt
+	//}
+
+	//identityCounterInt, err := strconv.ParseInt(identityCounter, 10, 64)
+	//if err != nil {
+	//	return nil, fmt.Errorf("error parsing identity counter: %v", err)
+	//}
+
+	//identityCounterUpperbound := identityCounterInt + 1
+
+	//currentDate := time.Now().UTC()
+
+	//expirationDateLowerbound := "0x" + hex.EncodeToString([]byte(currentDate.Format("060102")))
+
+	//birthDateUpperbound := "0x" + hex.EncodeToString([]byte(currentDate.AddDate(-18, 0, 0).Format("060102")))
+
+	inputs := &QueryIdentityInputs{
+		Dg1:                       ByteArrayToBits(dg1), // not exist, exist in app
+		EventID:                   eventID,
+		EventData:                 decodedAddressInt.String(),
+		IDStateRoot:               idStateRoot,     // not exist, exist in app
+		IDStateSiblings:           idStateSiblings, // not exist, exist in app
+		PkPassportHash:            pkPassportHash,  // not exist, exist in app
+		Selector:                  selector,
+		SkIdentity:                p.secretKey.BigInt().String(), // not exist, exist in app
+		Timestamp:                 issueTimestamp,                // not exist, exist in app
+		IdentityCounter:           identityCounter,               // not exist, exist in app
+		TimestampLowerbound:       TimestampLowerbound,           //       strconv.FormatInt(timestampLowerbound, 10),
+		TimestampUpperbound:       TimestampUpperbound,           //       strconv.FormatInt(timestampUpperbound, 10),
+		IdentityCounterLowerbound: IdentityCounterLowerbound,     // "0",
+		IdentityCounterUpperbound: IdentityCounterUpperbound,     // strconv.FormatInt(identityCounterUpperbound, 10),
+		ExpirationDateLowerbound:  ExpirationDateLowerbound,      //  expirationDateLowerbound,
+		ExpirationDateUpperbound:  ExpirationDateUpperbound,      //  "0x303030303030",
+		BirthDateLowerbound:       BirthDateLowerbound,           //       "0x303030303030",
+		BirthDateUpperbound:       BirthDateUpperbound,           //       birthDateUpperbound,
+		CitizenshipMask:           CitizenshipMask,               //           "0x303030303030",
+	}
+
+	json, err := inputs.Marshal()
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling inputs: %v", err)
+	}
+
+	return json, nil
+}
+
 // WalletSend sends tokens to desrination via Cosmos
 func (p *Profile) WalletSend(toAddr string, amount string, chainID string, denom string, rpcIP string) ([]byte, error) {
 	chainConfig := client.ChainConfig{
