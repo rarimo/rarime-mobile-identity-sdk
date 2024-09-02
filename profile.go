@@ -221,6 +221,73 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 	return json, nil
 }
 
+func (p *Profile) BuildQueryIdentityInputs(
+	dg1 []byte,
+	smtProofJSON []byte,
+	selector string,
+	pkPassportHash string,
+	issueTimestamp string,
+	identityCounter string,
+	eventID string,
+	TimestampLowerbound string,
+	TimestampUpperbound string,
+	IdentityCounterLowerbound string,
+	IdentityCounterUpperbound string,
+	ExpirationDateLowerbound string,
+	ExpirationDateUpperbound string,
+	BirthDateLowerbound string,
+	BirthDateUpperbound string,
+	CitizenshipMask string,
+) ([]byte, error) {
+	var smtProof SMTProof
+	if err := json.Unmarshal(smtProofJSON, &smtProof); err != nil {
+		return nil, fmt.Errorf("error unmarshalling id state siblings: %v", err)
+	}
+
+	idStateRoot := new(big.Int).SetBytes(smtProof.Root).String()
+
+	var idStateSiblings []string
+	for _, sibling := range smtProof.Siblings {
+		idStateSiblings = append(idStateSiblings, new(big.Int).SetBytes(sibling).String())
+	}
+
+	_, decodedAddress, err := bech32.Decode(p.wallet.Address)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding address: %v", err)
+	}
+
+	decodedAddressInt := new(big.Int).SetBytes(decodedAddress)
+
+	inputs := &QueryIdentityInputs{
+		Dg1:                       ByteArrayToBits(dg1),
+		EventID:                   eventID,
+		EventData:                 decodedAddressInt.String(),
+		IDStateRoot:               idStateRoot,
+		IDStateSiblings:           idStateSiblings,
+		PkPassportHash:            pkPassportHash,
+		Selector:                  selector,
+		SkIdentity:                p.secretKey.BigInt().String(),
+		Timestamp:                 issueTimestamp,
+		IdentityCounter:           identityCounter,
+		TimestampLowerbound:       TimestampLowerbound,
+		TimestampUpperbound:       TimestampUpperbound,
+		IdentityCounterLowerbound: IdentityCounterLowerbound,
+		IdentityCounterUpperbound: IdentityCounterUpperbound,
+		ExpirationDateLowerbound:  ExpirationDateLowerbound,
+		ExpirationDateUpperbound:  ExpirationDateUpperbound,
+		BirthDateLowerbound:       BirthDateLowerbound,
+		BirthDateUpperbound:       BirthDateUpperbound,
+		CitizenshipMask:           CitizenshipMask,
+	}
+
+	json, err := inputs.Marshal()
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling inputs: %v", err)
+	}
+
+	return json, nil
+}
+
 // WalletSend sends tokens to desrination via Cosmos
 func (p *Profile) WalletSend(toAddr string, amount string, chainID string, denom string, rpcIP string) ([]byte, error) {
 	chainConfig := client.ChainConfig{

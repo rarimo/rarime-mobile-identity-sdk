@@ -24,6 +24,8 @@ go.work
 .DS_Store
 # Go mobile build artifacts
 Frameworks/
+Identity.aar
+Identity-sources.jar
 
 go/
 
