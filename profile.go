@@ -221,7 +221,6 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 	return json, nil
 }
 
-// BuildAirdropQueryIdentityInputs builds the inputs for the queryIdentity circuit.
 func (p *Profile) BuildQueryIdentityInputs(
 	dg1 []byte,
 	smtProofJSON []byte,
@@ -230,8 +229,6 @@ func (p *Profile) BuildQueryIdentityInputs(
 	issueTimestamp string,
 	identityCounter string,
 	eventID string,
-	startedAt int64,
-
 	TimestampLowerbound string,
 	TimestampUpperbound string,
 	IdentityCounterLowerbound string,
@@ -261,54 +258,26 @@ func (p *Profile) BuildQueryIdentityInputs(
 
 	decodedAddressInt := new(big.Int).SetBytes(decodedAddress)
 
-	//issueTimestampInt, err := strconv.ParseInt(issueTimestamp, 10, 64)
-	//if err != nil {
-	//	return nil, fmt.Errorf("error parsing issue timestamp: %v", err)
-	//}
-
-	//var timestampLowerbound int64
-	//var timestampUpperbound int64
-	//if issueTimestampInt > startedAt {
-	//	timestampLowerbound = 0
-	//	timestampUpperbound = issueTimestampInt + 1
-	//} else {
-	//	timestampLowerbound = issueTimestampInt
-	//	timestampUpperbound = startedAt
-	//}
-
-	//identityCounterInt, err := strconv.ParseInt(identityCounter, 10, 64)
-	//if err != nil {
-	//	return nil, fmt.Errorf("error parsing identity counter: %v", err)
-	//}
-
-	//identityCounterUpperbound := identityCounterInt + 1
-
-	//currentDate := time.Now().UTC()
-
-	//expirationDateLowerbound := "0x" + hex.EncodeToString([]byte(currentDate.Format("060102")))
-
-	//birthDateUpperbound := "0x" + hex.EncodeToString([]byte(currentDate.AddDate(-18, 0, 0).Format("060102")))
-
 	inputs := &QueryIdentityInputs{
-		Dg1:                       ByteArrayToBits(dg1), // not exist, exist in app
+		Dg1:                       ByteArrayToBits(dg1),
 		EventID:                   eventID,
 		EventData:                 decodedAddressInt.String(),
-		IDStateRoot:               idStateRoot,     // not exist, exist in app
-		IDStateSiblings:           idStateSiblings, // not exist, exist in app
-		PkPassportHash:            pkPassportHash,  // not exist, exist in app
+		IDStateRoot:               idStateRoot,
+		IDStateSiblings:           idStateSiblings,
+		PkPassportHash:            pkPassportHash,
 		Selector:                  selector,
-		SkIdentity:                p.secretKey.BigInt().String(), // not exist, exist in app
-		Timestamp:                 issueTimestamp,                // not exist, exist in app
-		IdentityCounter:           identityCounter,               // not exist, exist in app
-		TimestampLowerbound:       TimestampLowerbound,           //       strconv.FormatInt(timestampLowerbound, 10),
-		TimestampUpperbound:       TimestampUpperbound,           //       strconv.FormatInt(timestampUpperbound, 10),
-		IdentityCounterLowerbound: IdentityCounterLowerbound,     // "0",
-		IdentityCounterUpperbound: IdentityCounterUpperbound,     // strconv.FormatInt(identityCounterUpperbound, 10),
-		ExpirationDateLowerbound:  ExpirationDateLowerbound,      //  expirationDateLowerbound,
-		ExpirationDateUpperbound:  ExpirationDateUpperbound,      //  "0x303030303030",
-		BirthDateLowerbound:       BirthDateLowerbound,           //       "0x303030303030",
-		BirthDateUpperbound:       BirthDateUpperbound,           //       birthDateUpperbound,
-		CitizenshipMask:           CitizenshipMask,               //           "0x303030303030",
+		SkIdentity:                p.secretKey.BigInt().String(),
+		Timestamp:                 issueTimestamp,
+		IdentityCounter:           identityCounter,
+		TimestampLowerbound:       TimestampLowerbound,
+		TimestampUpperbound:       TimestampUpperbound,
+		IdentityCounterLowerbound: IdentityCounterLowerbound,
+		IdentityCounterUpperbound: IdentityCounterUpperbound,
+		ExpirationDateLowerbound:  ExpirationDateLowerbound,
+		ExpirationDateUpperbound:  ExpirationDateUpperbound,
+		BirthDateLowerbound:       BirthDateLowerbound,
+		BirthDateUpperbound:       BirthDateUpperbound,
+		CitizenshipMask:           CitizenshipMask,
 	}
 
 	json, err := inputs.Marshal()
