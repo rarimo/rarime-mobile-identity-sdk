@@ -229,6 +229,7 @@ func (p *Profile) BuildQueryIdentityInputs(
 	issueTimestamp string,
 	identityCounter string,
 	eventID string,
+	eventData string,
 	TimestampLowerbound string,
 	TimestampUpperbound string,
 	IdentityCounterLowerbound string,
@@ -251,17 +252,10 @@ func (p *Profile) BuildQueryIdentityInputs(
 		idStateSiblings = append(idStateSiblings, new(big.Int).SetBytes(sibling).String())
 	}
 
-	_, decodedAddress, err := bech32.Decode(p.wallet.Address)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding address: %v", err)
-	}
-
-	decodedAddressInt := new(big.Int).SetBytes(decodedAddress)
-
 	inputs := &QueryIdentityInputs{
 		Dg1:                       ByteArrayToBits(dg1),
 		EventID:                   eventID,
-		EventData:                 decodedAddressInt.String(),
+		EventData:                 eventData,
 		IDStateRoot:               idStateRoot,
 		IDStateSiblings:           idStateSiblings,
 		PkPassportHash:            pkPassportHash,
