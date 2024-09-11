@@ -13,6 +13,7 @@ type QueryIdentityInputs struct {
 	Selector                  string   `json:"selector"`
 	SkIdentity                string   `json:"skIdentity"`
 	Timestamp                 string   `json:"timestamp"`
+	CurrentDate               string   `json:"currentDate"`
 	IdentityCounter           string   `json:"identityCounter"`
 	TimestampLowerbound       string   `json:"timestampLowerbound"`
 	TimestampUpperbound       string   `json:"timestampUpperbound"`
