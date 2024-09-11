@@ -186,9 +186,9 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 	identityCounterUpperbound := identityCounterInt + 1
 
 	currentDate := time.Now().UTC()
-
-	expirationDateLowerbound := "0x" + hex.EncodeToString([]byte(currentDate.Format("060102")))
-
+	currentDateHex := "0x" + hex.EncodeToString([]byte(currentDate.Format("060102")))
+	
+	birthDateLowerbound := "0x" + hex.EncodeToString([]byte(currentDate.AddDate(-100, 0, 0).Format("060102")))
 	birthDateUpperbound := "0x" + hex.EncodeToString([]byte(currentDate.AddDate(-18, 0, 0).Format("060102")))
 
 	inputs := &QueryIdentityInputs{
@@ -201,14 +201,15 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 		Selector:                  selector,
 		SkIdentity:                p.secretKey.BigInt().String(),
 		Timestamp:                 issueTimestamp,
+		CurrentDate:               currentDateHex,
 		IdentityCounter:           identityCounter,
 		TimestampLowerbound:       strconv.FormatInt(timestampLowerbound, 10),
 		TimestampUpperbound:       strconv.FormatInt(timestampUpperbound, 10),
 		IdentityCounterLowerbound: "0",
 		IdentityCounterUpperbound: strconv.FormatInt(identityCounterUpperbound, 10),
-		ExpirationDateLowerbound:  expirationDateLowerbound,
+		ExpirationDateLowerbound:  currentDateHex,
 		ExpirationDateUpperbound:  "0x303030303030",
-		BirthDateLowerbound:       "0x303030303030",
+		BirthDateLowerbound:       birthDateLowerbound,
 		BirthDateUpperbound:       birthDateUpperbound,
 		CitizenshipMask:           "0x303030303030",
 	}
