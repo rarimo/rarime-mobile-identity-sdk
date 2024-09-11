@@ -252,6 +252,9 @@ func (p *Profile) BuildQueryIdentityInputs(
 		idStateSiblings = append(idStateSiblings, new(big.Int).SetBytes(sibling).String())
 	}
 
+	currentDate := time.Now().UTC()
+	currentDateHex := "0x" + hex.EncodeToString([]byte(currentDate.Format("060102")))
+
 	inputs := &QueryIdentityInputs{
 		Dg1:                       ByteArrayToBits(dg1),
 		EventID:                   eventID,
@@ -262,6 +265,7 @@ func (p *Profile) BuildQueryIdentityInputs(
 		Selector:                  selector,
 		SkIdentity:                p.secretKey.BigInt().String(),
 		Timestamp:                 issueTimestamp,
+		CurrentDate:               currentDateHex,
 		IdentityCounter:           identityCounter,
 		TimestampLowerbound:       TimestampLowerbound,
 		TimestampUpperbound:       TimestampUpperbound,
