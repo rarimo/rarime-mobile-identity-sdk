@@ -151,6 +151,25 @@ func pubKeyPemToRaw(pubKeyPem []byte) ([]byte, bool, error) {
 	return raw, isEcdsa, nil
 }
 
+func pemToRsaPubKey(pubKeyPem []byte) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode(pubKeyPem)
+	if block == nil {
+		return nil, fmt.Errorf("error decoding public key pem")
+	}
+
+	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing public key: %v", err)
+	}
+
+	rsaPubKey, ok := pubKey.(*rsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("error converting public key to RSA public key")
+	}
+
+	return rsaPubKey, nil
+}
+
 // CalculateProofIndex calculates the proof index.
 func CalculateProofIndex(passportKey string, identityKey string) ([]byte, error) {
 	passportKeyInt, ok := new(big.Int).SetString(passportKey, 10)
