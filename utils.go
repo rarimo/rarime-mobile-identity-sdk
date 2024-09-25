@@ -11,16 +11,39 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"encoding/hex"
 
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
 	"github.com/rarimo/ldif-sdk/ldif"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
 const smartChunking2BlockSize uint64 = 512
 const brainpoolP256CurveOID = "1.2.840.10045.2.1"
 const lowSMaxHex = "54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb"
 const nHex = "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7"
+
+// SignMessageWithSecp256k1 signs a string message using a private key string (hex format) and the secp256k1 curve.
+func SignMessageWithSecp256k1(privateKey string, message string) (string, error) {
+	privateKeyBytes, err := hex.DecodeString(privateKey)
+	if err != nil {
+		return "", fmt.Errorf("error decoding private key hex: %v", err)
+	}
+
+	messageBytes := []byte(message)
+
+	hash := sha256.Sum256(messageBytes)
+
+	signature, err := secp256k1.Sign(hash[:], privateKeyBytes)
+	if err != nil {
+		return "", fmt.Errorf("error signing the message: %v", err)
+	}
+
+	signatureHex := hex.EncodeToString(signature)
+
+	return signatureHex, nil
+}
 
 // LoadMasterCertificatesPem loads the master certificates from an LDIF file in an S3 bucket.
 func LoadMasterCertificatesPem(bucketName string, fileName string) ([]byte, error) {
