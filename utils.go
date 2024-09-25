@@ -8,15 +8,15 @@ import (
 	"crypto/x509"
 	"encoding/asn1"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"math/big"
-	"encoding/hex"
 
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
 	"github.com/rarimo/ldif-sdk/ldif"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
 const smartChunking2BlockSize uint64 = 512
@@ -31,7 +31,10 @@ func SignMessageWithSecp256k1(privateKey string, message string) (string, error)
 		return "", fmt.Errorf("error decoding private key hex: %v", err)
 	}
 
-	messageBytes := []byte(message)
+	messageBytes, err := hex.DecodeString(message)
+	if err != nil {
+		return "", fmt.Errorf("error decoding message hex: %v", err)
+	}
 
 	hash := sha256.Sum256(messageBytes)
 

@@ -10,6 +10,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestLightSignature(t *testing.T) {
+	privateKey := "18cadcf91ee2bd025ed4581a87906911631faba366b9e61e1c70f80d89f75de6"
+	message := "041a2814efbd3b77d254aeed92f768616a7f66c4fee65f3de152b4fdcb62e1f082faaa09bb88ff9e660397086031cb66aef53735f1d88f7eb2b682cbdd20b4900b"
+
+	signature, err := identity.SignMessageWithSecp256k1(privateKey, message)
+	if err != nil {
+		t.Fatalf("signature is incorrect %s", err)
+	}
+
+	t.Log(signature)
+}
+
 func TestBytesArrayToBits(t *testing.T) {
 	bytes := []byte{0x01, 0x02, 0x03}
 
