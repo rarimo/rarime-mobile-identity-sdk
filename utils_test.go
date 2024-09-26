@@ -10,6 +10,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestLightSignatureWithPubSignals(t *testing.T) {
+	privateKey := "18cadcf91ee2bd025ed4581a87906911631faba366b9e61e1c70f80d89f75de6"
+	pubSignals := []string{"0x20925303098627062266630214635967906856225360340756326562498326001746719100911", "0x303030303030", "303030303030", "0", "0", "0", "5589842", "0", "0", "304358862882731539112827930982999386691702727710421481944329166126417129570", "303030303030", "303030303030", "39", "0", "0", "1", "0", "52983525027888", "52983525027888", "52983525027888", "5298352502788", "0"}
+
+	signature, err := identity.SignPubSignalsWithSecp256k1(privateKey, pubSignals)
+	if err != nil {
+		t.Fatalf("signature is incorrect %s", err)
+	}
+
+	t.Log(signature)
+}
+
 func TestLightSignature(t *testing.T) {
 	privateKey := "18cadcf91ee2bd025ed4581a87906911631faba366b9e61e1c70f80d89f75de6"
 	message := "041a2814efbd3b77d254aeed92f768616a7f66c4fee65f3de152b4fdcb62e1f082faaa09bb88ff9e660397086031cb66aef53735f1d88f7eb2b682cbdd20b4900b"
