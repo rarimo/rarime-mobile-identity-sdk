@@ -31,17 +31,16 @@ func SignMessageWithSecp256k1(privateKey string, message string) (string, error)
 		return "", fmt.Errorf("error decoding private key hex: %v", err)
 	}
 
-	messageBytes, err := hex.DecodeString(message)
-	if err != nil {
-		return "", fmt.Errorf("error decoding message hex: %v", err)
-	}
+	hash := sha256.New()
+	hash.Write([]byte(message))
+	messageHash := hash.Sum(nil)
 
-	hash := sha256.Sum256(messageBytes)
-
-	signature, err := secp256k1.Sign(hash[:], privateKeyBytes)
+	signature, err := secp256k1.Sign(messageHash, privateKeyBytes)
 	if err != nil {
 		return "", fmt.Errorf("error signing the message: %v", err)
 	}
+
+	signature = signature[:64]
 
 	signatureHex := hex.EncodeToString(signature)
 
