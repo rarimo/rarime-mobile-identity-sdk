@@ -9,6 +9,7 @@ import (
 	"encoding/asn1"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"math/big"
@@ -25,7 +26,12 @@ const lowSMaxHex = "54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb7
 const nHex = "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7"
 
 // SignPubSignalsWithSecp256k1 signs a public signals using a private key string (hex format) and the secp256k1 curve.
-func SignPubSignalsWithSecp256k1(privateKey string, pubSignals PubSignals) (string, error) {
+func SignPubSignalsWithSecp256k1(privateKey string, pubSignalsJson []byte) (string, error) {
+	var pubSignals []string
+	if err := json.Unmarshal(pubSignalsJson, &pubSignals); err != nil {
+		return "", fmt.Errorf("error decoding  pub  signals: %v", err)
+	}
+
 	privateKeyBytes, err := hex.DecodeString(privateKey)
 	if err != nil {
 		return "", fmt.Errorf("error decoding private key hex: %v", err)

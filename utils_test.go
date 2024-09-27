@@ -2,6 +2,7 @@ package identity_test
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -14,7 +15,12 @@ func TestLightSignatureWithPubSignals(t *testing.T) {
 	privateKey := "18cadcf91ee2bd025ed4581a87906911631faba366b9e61e1c70f80d89f75de6"
 	pubSignals := []string{"0x076364e07914c18c10b79e72746078a58fa2cf54a58a0487f7a2580ed68ee750", "0x303030303030", "0x303030303030", "0", "0", "0", "5589842", "0", "0", "304358862882731539112827930982999386691702727710421481944329166126417129570", "303030303030", "303030303030", "39", "0", "0", "1", "0", "52983525027888", "52983525027888", "52983525027888", "5298352502788", "0"}
 
-	signature, err := identity.SignPubSignalsWithSecp256k1(privateKey, pubSignals)
+	pubSignalsJson, err := json.Marshal(pubSignals)
+	if err != nil {
+		t.Fatalf("Error encoding pubSignals to JSON: %v", err)
+	}
+
+	signature, err := identity.SignPubSignalsWithSecp256k1(privateKey, pubSignalsJson)
 	if err != nil {
 		t.Fatalf("signature is incorrect %s", err)
 	}
