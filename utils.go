@@ -31,23 +31,22 @@ func SignPubSignalsWithSecp256k1(privateKey string, pubSignals PubSignals) (stri
 		return "", fmt.Errorf("error decoding private key hex: %v", err)
 	}
 
-	var pubSignalsBytesArray []byte
+	var hash = sha256.New()
 	for _, pubSignalByte := range pubSignals {
 		if len(pubSignalByte) > 1 && pubSignalByte[:2] == "0x" {
-			pubSignalByte = pubSignalByte[2:]
+			pubSignalBytes, convertErr := hex.DecodeString(pubSignalByte[2:])
+			if convertErr != nil {
+				return "", fmt.Errorf("error setting pubSignalHex: %v", pubSignalByte)
+			}
+			hash.Write(pubSignalBytes)
+		} else {
+			pubSignalDecimal, ok := new(big.Int).SetString(pubSignalByte, 10)
+			if !ok {
+				return "", fmt.Errorf("error setting pubSignal: %v", pubSignalByte)
+			}
+			hash.Write(pubSignalDecimal.Bytes())
 		}
-		pubSignalDecimal, ok := new(big.Int).SetString(pubSignalByte, 10)
-		if !ok {
-			return "nil", fmt.Errorf("error setting pubSignal: %v", pubSignalByte)
-		}
-		pubSignal := make([]byte, len(pubSignalDecimal.Bytes()))
-		pubSignalDecimal.FillBytes(pubSignal[:])
-
-		pubSignalsBytesArray = append(pubSignalsBytesArray, pubSignal...)
 	}
-
-	hash := sha256.New()
-	hash.Write(pubSignalsBytesArray)
 	messageHash := hash.Sum(nil)
 
 	signature, err := secp256k1.Sign(messageHash, privateKeyBytes)
