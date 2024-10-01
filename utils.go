@@ -8,10 +8,13 @@ import (
 	"crypto/x509"
 	"encoding/asn1"
 	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
 	"github.com/rarimo/ldif-sdk/ldif"
@@ -21,6 +24,67 @@ const smartChunking2BlockSize uint64 = 512
 const brainpoolP256CurveOID = "1.2.840.10045.2.1"
 const lowSMaxHex = "54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb"
 const nHex = "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7"
+
+// SignPubSignalsWithSecp256k1 signs a public signals using a private key string (hex format) and the secp256k1 curve.
+func SignPubSignalsWithSecp256k1(privateKey string, pubSignalsJson []byte) (string, error) {
+	var pubSignals []string
+	if err := json.Unmarshal(pubSignalsJson, &pubSignals); err != nil {
+		return "", fmt.Errorf("error decoding  pub  signals: %v", err)
+	}
+
+	privateKeyBytes, err := hex.DecodeString(privateKey)
+	if err != nil {
+		return "", fmt.Errorf("error decoding private key hex: %v", err)
+	}
+
+	var hash = sha256.New()
+	for _, pubSignalByte := range pubSignals {
+		if len(pubSignalByte) > 1 && pubSignalByte[:2] == "0x" {
+			pubSignalBytes, convertErr := hex.DecodeString(pubSignalByte[2:])
+			if convertErr != nil {
+				return "", fmt.Errorf("error setting pubSignalHex: %v", pubSignalByte)
+			}
+			hash.Write(pubSignalBytes)
+		} else {
+			pubSignalDecimal, ok := new(big.Int).SetString(pubSignalByte, 10)
+			if !ok {
+				return "", fmt.Errorf("error setting pubSignal: %v", pubSignalByte)
+			}
+			hash.Write(pubSignalDecimal.Bytes())
+		}
+	}
+	messageHash := hash.Sum(nil)
+
+	signature, err := secp256k1.Sign(messageHash, privateKeyBytes)
+	if err != nil {
+		return "", fmt.Errorf("error signing the message: %v", err)
+	}
+
+	signatureHex := hex.EncodeToString(signature)
+
+	return signatureHex, nil
+}
+
+// SignMessageWithSecp256k1 signs a string message using a private key string (hex format) and the secp256k1 curve.
+func SignMessageWithSecp256k1(privateKey string, message string) (string, error) {
+	privateKeyBytes, err := hex.DecodeString(privateKey)
+	if err != nil {
+		return "", fmt.Errorf("error decoding private key hex: %v", err)
+	}
+
+	hash := sha256.New()
+	hash.Write([]byte(message))
+	messageHash := hash.Sum(nil)
+
+	signature, err := secp256k1.Sign(messageHash, privateKeyBytes)
+	if err != nil {
+		return "", fmt.Errorf("error signing the message: %v", err)
+	}
+
+	signatureHex := hex.EncodeToString(signature)
+
+	return signatureHex, nil
+}
 
 // LoadMasterCertificatesPem loads the master certificates from an LDIF file in an S3 bucket.
 func LoadMasterCertificatesPem(bucketName string, fileName string) ([]byte, error) {
