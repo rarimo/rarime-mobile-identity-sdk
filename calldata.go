@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/iden3/go-iden3-crypto/keccak256"
 	"github.com/rarimo/ldif-sdk/mt"
 )
 
@@ -111,8 +112,8 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 	signature []byte,
 	pubKeyPem []byte,
 	certificatesRootRaw []byte,
-	certificatePubKeySize int,
-	isRevoced bool,
+	isRevoked bool,
+	circuitName string,
 ) ([]byte, error) {
 	signature, err := NormalizeSignature(signature)
 	if err != nil {
@@ -216,18 +217,7 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 	datatype := [32]byte{}
 	copy(datatype[:], datatypeBuf)
 
-	var zkTypeBuf []byte
-	if certificatePubKeySize == 4096 {
-		zkTypeBuf, err = hex.DecodeString(ZUniversal4096Hex)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		zkTypeBuf, err = hex.DecodeString(ZUniversal2048V3Hex)
-		if err != nil {
-			return nil, err
-		}
-	}
+	zkTypeBuf := keccak256.Hash([]byte(circuitName))
 
 	var zkType [32]byte
 	copy(zkType[:], zkTypeBuf)
@@ -252,7 +242,7 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 	}
 
 	var methodName string
-	if isRevoced {
+	if isRevoked {
 		methodName = "reissueIdentity"
 	} else {
 		methodName = "register"
