@@ -7,8 +7,8 @@ type RegisterIdentityInputs struct {
 	SkIdentity                   string   `json:"skIdentity"`
 	EncapsulatedContent          []int64  `json:"encapsulatedContent"`
 	SignedAttributes             []int64  `json:"signedAttributes"`
-	Sign                         []string `json:"sign"`
-	Modulus                      []string `json:"modulus"`
+	Signature                    []string `json:"signature"`
+	Pubkey                       []string `json:"pubkey"`
 	Dg1                          []int64  `json:"dg1"`
 	Dg15                         []int64  `json:"dg15"`
 	SlaveMerleRoot               string   `json:"slaveMerkleRoot"`

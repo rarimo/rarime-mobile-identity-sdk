@@ -82,57 +82,6 @@ func (p *Profile) GetRarimoAddress() string {
 	return p.wallet.Address
 }
 
-// BuildRegisterIdentityInputs builds the inputs for the registerIdentity circuit.
-func (p *Profile) BuildRegisterIdentityInputs(
-	encapsulatedContent []byte,
-	signedAttributes []byte,
-	dg1 []byte,
-	dg15 []byte,
-	pubKeyPem []byte,
-	signature []byte,
-	certificatesSMTProofJSON []byte,
-) ([]byte, error) {
-	var certificatesSMTProof SMTProof
-	if err := json.Unmarshal(certificatesSMTProofJSON, &certificatesSMTProof); err != nil {
-		return nil, fmt.Errorf("error unmarshalling certificates SMT proof: %v", err)
-	}
-
-	rsaPubKeyN, _, err := pubKeyPemToRaw(pubKeyPem)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing public key: %v", err)
-	}
-
-	signatureInt := new(big.Int).SetBytes(signature)
-
-	slaveMerleRoot := new(big.Int).SetBytes(certificatesSMTProof.Root).String()
-
-	var slaveMerkleInclusionBranches []string
-	for _, sibling := range certificatesSMTProof.Siblings {
-		slaveMerkleInclusionBranches = append(slaveMerkleInclusionBranches, new(big.Int).SetBytes(sibling).String())
-	}
-
-	smartChunkingNumber := calculateSmartChunkingNumber(len(rsaPubKeyN) * 8)
-
-	// TODO - implement SmartChunking3 and handle code below there
-	if uint64(len(dg15)*8+65) > smartChunking2BlockSize*6 {
-		return nil, fmt.Errorf("dg15 is too long, current: %v, max: %v", len(dg15)*8, smartChunking2BlockSize*6-65)
-	}
-
-	inputs := &RegisterIdentityInputs{
-		SkIdentity:                   p.secretKey.BigInt().String(),
-		EncapsulatedContent:          SmartChunking2(ByteArrayToBits(encapsulatedContent), 6),
-		SignedAttributes:             SmartChunking2(ByteArrayToBits(signedAttributes), 2),
-		Sign:                         SmartChunking(signatureInt, smartChunkingNumber),
-		Modulus:                      SmartChunking(new(big.Int).SetBytes(rsaPubKeyN), smartChunkingNumber),
-		Dg1:                          SmartChunking2(ByteArrayToBits(dg1), 2),
-		Dg15:                         SmartChunking2(ByteArrayToBits(dg15), 6),
-		SlaveMerleRoot:               slaveMerleRoot,
-		SlaveMerkleInclusionBranches: slaveMerkleInclusionBranches,
-	}
-
-	return inputs.Marshal()
-}
-
 // BuildAirdropQueryIdentityInputs builds the inputs for the queryIdentity circuit.
 func (p *Profile) BuildAirdropQueryIdentityInputs(
 	dg1 []byte,
@@ -187,7 +136,7 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 
 	currentDate := time.Now().UTC()
 	currentDateHex := "0x" + hex.EncodeToString([]byte(currentDate.Format("060102")))
-	
+
 	birthDateLowerbound := "0x" + hex.EncodeToString([]byte(currentDate.AddDate(-100, 0, 0).Format("060102")))
 	birthDateUpperbound := "0x" + hex.EncodeToString([]byte(currentDate.AddDate(-18, 0, 0).Format("060102")))
 

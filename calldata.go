@@ -34,7 +34,7 @@ const CRsa2048Hex = "bf09b046e1fd32abb843f6ee4422c076a6fb365390d5be71020535c1497
 const ZUniversal4096Hex = "fdd39d1855d1c9f04b1caa605196f28d42ffbe1673ecbfaf256c0b92e2aae9b5"
 
 // ZUniversal2048Hex represents the register certificate data type.
-const ZUniversal2048Hex = "4af7ef435279fb42259af3d2c294192bbae59a3bbaa1edf239221bfb91cb532b"
+const ZUniversal2048V3Hex = "77556bf7987c465a2feaca4a9277cdb9f98c9872275d283dea9a3854c8b692f1"
 
 // ZInternalHex represents the register certificate data type.
 const ZInternalHex = "6caaf1a07b99c61d7eab067e1af8e43fdeda473f5d537cf8250c8b6154121d21"
@@ -188,7 +188,7 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 			return nil, err
 		}
 
-		pubKey = passportHash.Bytes()
+		pubKey = []byte{}
 	} else {
 		pubKeyBuf, isEcdsa, err := pubKeyPemToRaw(pubKeyPem)
 		if err != nil {
@@ -223,7 +223,7 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 			return nil, err
 		}
 	} else {
-		zkTypeBuf, err = hex.DecodeString(ZUniversal2048Hex)
+		zkTypeBuf, err = hex.DecodeString(ZUniversal2048V3Hex)
 		if err != nil {
 			return nil, err
 		}
