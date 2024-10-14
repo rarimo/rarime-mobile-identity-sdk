@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -31,14 +32,8 @@ const CRsa4096Hex = "16a6ebfa039c78163278bbd4ec27579c8c8939b01f1b3f6fb029c968299
 // CRsa2048Hex represents the register certificate data type.
 const CRsa2048Hex = "bf09b046e1fd32abb843f6ee4422c076a6fb365390d5be71020535c149781da1"
 
-// ZUniversal4096Hex represents the register certificate data type.
-const ZUniversal4096Hex = "fdd39d1855d1c9f04b1caa605196f28d42ffbe1673ecbfaf256c0b92e2aae9b5"
-
-// ZUniversal2048Hex represents the register certificate data type.
-const ZUniversal2048V3Hex = "77556bf7987c465a2feaca4a9277cdb9f98c9872275d283dea9a3854c8b692f1"
-
-// ZInternalHex represents the register certificate data type.
-const ZInternalHex = "6caaf1a07b99c61d7eab067e1af8e43fdeda473f5d537cf8250c8b6154121d21"
+// ZKTypePrefix represerts the circuit zk type prefix
+const ZKTypePrefix = "Z_PER_PASSPORT"
 
 // RSAEXPONENT3 represents the RSA exponent 3.
 const RSAEXPONENT3 = 3
@@ -217,7 +212,14 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 	datatype := [32]byte{}
 	copy(datatype[:], datatypeBuf)
 
-	zkTypeBuf := keccak256.Hash([]byte(circuitName))
+	_, zkTypeSuffix, wasCircuitNameCut := strings.Cut(circuitName, "_")
+	if !wasCircuitNameCut {
+		return nil, fmt.Errorf("circuit name is in invalid format")
+	}
+
+	var zkTypeName = fmt.Sprintf("%v_%v", ZKTypePrefix, zkTypeSuffix)
+
+	zkTypeBuf := keccak256.Hash([]byte(zkTypeName))
 
 	var zkType [32]byte
 	copy(zkType[:], zkTypeBuf)
