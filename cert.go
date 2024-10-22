@@ -118,8 +118,6 @@ func (x *X509Util) FindKeyPositionInSignedAttributes(cert *x509.Certificate) (*b
 	switch pub := cert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		publicKey = pub.N.Bytes()
-
-		fmt.Println("public key size:", len(publicKey))
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}
