@@ -311,16 +311,8 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
 		return nil, fmt.Errorf("failed to find expiration position in signed attributes: %v", err)
 	}
 
-	var slaveMemberKey []byte
-	switch pub := slaveCert.PublicKey.(type) {
-	case *rsa.PublicKey:
-		slaveMemberKey = pub.N.Bytes()
-	default:
-		return nil, fmt.Errorf("unsupported public key type: %T", pub)
-	}
-
 	var dataType [32]byte
-	if len(slaveMemberKey)*8 == 4096 {
+	if len(icaoMemberKey)*8 == 4096 {
 		dataTypeBuf, err := hex.DecodeString(CRsa4096Hex)
 		if err != nil {
 			return nil, err
