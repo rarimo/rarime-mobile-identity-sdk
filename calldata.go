@@ -32,6 +32,12 @@ const CRsa4096Hex = "16a6ebfa039c78163278bbd4ec27579c8c8939b01f1b3f6fb029c968299
 // CRsa2048Hex represents the register certificate data type.
 const CRsa2048Hex = "bf09b046e1fd32abb843f6ee4422c076a6fb365390d5be71020535c149781da1"
 
+// CRsaPssSha22048Hex represents the register certificate data type.
+const CRsaPssSha22048Hex = "cf4edef1e314d92538b692be63d2fed3375e3a8896eca500c2bcce6954b1fe37"
+
+// CRsaPssSha24096Hex represents the register certificate data type.
+const CRsaPssSha24096Hex = "85ac18b260684c647d824fe03fd6490ae77f29e4044816cffa686e419aa619a7"
+
 // ZKTypePrefix represerts the circuit zk type prefix
 const ZKTypePrefix = "Z_PER_PASSPORT"
 
@@ -311,16 +317,40 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
 		return nil, fmt.Errorf("failed to find expiration position in signed attributes: %v", err)
 	}
 
+	var slaveMemberKey []byte
+	switch pub := slaveCert.PublicKey.(type) {
+	case *rsa.PublicKey:
+		slaveMemberKey = pub.N.Bytes()
+	default:
+		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+	}
+
+	isRsaPss := slaveCert.SignatureAlgorithm.String() == "SHA256-RSAPSS"
+
 	var dataType [32]byte
-	if len(icaoMemberKey)*8 == 4096 {
-		dataTypeBuf, err := hex.DecodeString(CRsa4096Hex)
+	if len(slaveMemberKey)*8 == 4096 {
+		var dataTypeHash string
+		if isRsaPss {
+			dataTypeHash = CRsaPssSha24096Hex
+		} else {
+			dataTypeHash = CRsa4096Hex
+		}
+
+		dataTypeBuf, err := hex.DecodeString(dataTypeHash)
 		if err != nil {
 			return nil, err
 		}
 
 		copy(dataType[:], dataTypeBuf)
 	} else {
-		dataTypeBuf, err := hex.DecodeString(CRsa2048Hex)
+		var dataTypeHash string
+		if isRsaPss {
+			dataTypeHash = CRsaPssSha22048Hex
+		} else {
+			dataTypeHash = CRsa2048Hex
+		}
+
+		dataTypeBuf, err := hex.DecodeString(dataTypeHash)
 		if err != nil {
 			return nil, err
 		}
