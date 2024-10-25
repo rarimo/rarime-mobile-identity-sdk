@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"crypto/ecdsa"
 	"crypto/rsa"
 	"encoding/hex"
 	"encoding/json"
@@ -300,6 +301,9 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
 	switch pub := masterCert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		icaoMemberKey = pub.N.Bytes()
+	case *ecdsa.PublicKey:
+		icaoMemberKey = pub.X.Bytes()
+		icaoMemberKey = append(icaoMemberKey, pub.Y.Bytes()...)
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}
@@ -321,6 +325,9 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
 	switch pub := slaveCert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		slaveMemberKey = pub.N.Bytes()
+	case *ecdsa.PublicKey:
+		slaveMemberKey = pub.X.Bytes()
+		slaveMemberKey = append(slaveMemberKey, pub.Y.Bytes()...)
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}

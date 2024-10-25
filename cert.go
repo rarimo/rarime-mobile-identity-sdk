@@ -2,6 +2,7 @@ package identity
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"crypto/rsa"
 	"encoding/pem"
 	"errors"
@@ -153,15 +154,18 @@ func (x *X509Util) GetSlaveCertificateIndex(slavePem []byte, mastersPem []byte) 
 		return nil, fmt.Errorf("failed to get master: %v", err)
 	}
 
-	var masterModulus []byte
+	var pubKeyRaw []byte
 	switch pub := slaveCert.PublicKey.(type) {
 	case *rsa.PublicKey:
-		masterModulus = pub.N.Bytes()
+		pubKeyRaw = pub.N.Bytes()
+	case *ecdsa.PublicKey:
+		pubKeyRaw = pub.X.Bytes()
+		pubKeyRaw = append(pubKeyRaw, pub.Y.Bytes()...)
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}
 
-	masterCertificateIndex, err := HashKey(masterModulus)
+	masterCertificateIndex, err := HashKey(pubKeyRaw)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash key: %v", err)
 	}
