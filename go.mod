@@ -9,7 +9,7 @@ require (
 	github.com/decred/dcrd/bech32 v1.1.3
 	github.com/ethereum/go-ethereum v1.14.9
 	github.com/iden3/go-iden3-crypto v0.0.16
-	github.com/rarimo/certificate-transparency-go v0.0.0-20240305114501-050b1f19639a
+	github.com/rarimo/certificate-transparency-go v0.0.0-20241028131422-3b57d6495419
 	github.com/rarimo/ldif-sdk v0.4.7-rc.1
 	github.com/rarimo/zkp-iden3-exposer v0.1.1
 	github.com/stretchr/testify v1.9.0
