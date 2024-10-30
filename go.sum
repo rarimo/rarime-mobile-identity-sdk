@@ -1150,6 +1150,8 @@ github.com/rarimo/ldif-sdk v0.4.7 h1:CSr8QeWb1+wd5jEAOQXnxTR9JaEsyfnVMyHG8C4KeHM
 github.com/rarimo/ldif-sdk v0.4.7/go.mod h1:LGDJjC9o12Zv8y5NY1kwHgU/G1uTJJIptQ6ukZkmupw=
 github.com/rarimo/ldif-sdk v0.4.8 h1:IojrYVcUqeS3KfJ8oXsMenJcXNbFj3JtCpOX6ImIxyQ=
 github.com/rarimo/ldif-sdk v0.4.8/go.mod h1:LGDJjC9o12Zv8y5NY1kwHgU/G1uTJJIptQ6ukZkmupw=
+github.com/rarimo/ldif-sdk v0.5.0 h1:I5Z+OJ1wRBXPURW/d/vxmOTiCD4evYkVQ95QFRApzNc=
+github.com/rarimo/ldif-sdk v0.5.0/go.mod h1:LGDJjC9o12Zv8y5NY1kwHgU/G1uTJJIptQ6ukZkmupw=
 github.com/rarimo/rarimo-core v1.1.0 h1:b3zN2HYBJY5AUFFm285i9vsyTTM9b7XwQGshrLYkD1I=
 github.com/rarimo/rarimo-core v1.1.0/go.mod h1:auP3KgxaSwkOUrLWBifjnMbbSQTSBA9Y/gVgq1WU/B4=
 github.com/rarimo/zkp-iden3-exposer v0.1.1 h1:NzgZrXDrrv3De6JHmemPlbJplm6MWsh75YV5V3/8Ymg=
