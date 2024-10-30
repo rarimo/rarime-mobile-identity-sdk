@@ -39,8 +39,8 @@ const CRsaPssSha22048Hex = "cf4edef1e314d92538b692be63d2fed3375e3a8896eca500c2bc
 // CRsaPssSha24096Hex represents the register certificate data type.
 const CRsaPssSha24096Hex = "85ac18b260684c647d824fe03fd6490ae77f29e4044816cffa686e419aa619a7"
 
-// CEcdsaSha2512 represents the register certificate data type.
-const CEcdsaSha2512 = "97f237579cf1101e32c69e3d3f2d9cbc3747a0efaa867086bfa569f8b841b25c"
+// CEcdsaSecp384R1Sha2512 represents the register certificate data type.
+const CEcdsaSecp384R1Sha2512 = "e2c232f7445df5c13a172ccc4ef65efadf0175b0618e736b6e4e7c64033d1b3e"
 
 // ZKTypePrefix represerts the circuit zk type prefix
 const ZKTypePrefix = "Z_PER_PASSPORT"
@@ -265,7 +265,7 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 
 // BuildRegisterCertificateCalldata builds the calldata for the register certificate function.
 func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
-	cosmosAddr string,
+	masterCertificates []byte,
 	slavePem []byte,
 	masterCertificatesBucketname string,
 	masterCertificatesFilename string,
@@ -275,7 +275,7 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
 		return nil, fmt.Errorf("failed to load master certificates pem: %v", err)
 	}
 
-	icaoTree, err := mt.BuildFromCosmos(cosmosAddr, true)
+	icaoTree, err := mt.BuildTreeFromCollection(masterCertificates)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build tree from collection: %v", err)
 	}
@@ -363,7 +363,7 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
 		slaveMemberKey = pub.X.Bytes()
 		slaveMemberKey = append(slaveMemberKey, pub.Y.Bytes()...)
 
-		dataTypeBuf, err := hex.DecodeString(CEcdsaSha2512)
+		dataTypeBuf, err := hex.DecodeString(CEcdsaSecp384R1Sha2512)
 		if err != nil {
 			return nil, err
 		}

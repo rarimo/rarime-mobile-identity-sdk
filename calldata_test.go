@@ -44,9 +44,7 @@ func TestBuildRegisterCertificate(t *testing.T) {
 
 	calldataBuilder := &identity.CallDataBuilder{}
 
-	cosmosAddr := "core-api.node1.mainnet-beta.rarimo.com:443"
-
-	calldata, err := calldataBuilder.BuildRegisterCertificateCalldata(cosmosAddr, slavePem, "rarimo-temp", "icaopkd-list.ldif")
+	calldata, err := calldataBuilder.BuildRegisterCertificateCalldata([]byte{}, slavePem, "rarimo-temp", "icaopkd-list.ldif")
 	if err != nil {
 		t.Errorf("failed to build calldata: %v", err)
 	}
