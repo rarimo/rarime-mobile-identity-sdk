@@ -2,6 +2,7 @@ package identity_test
 
 import (
 	"encoding/hex"
+	"fmt"
 	"os"
 	"testing"
 
@@ -45,8 +46,10 @@ func TestBuildRegisterCertificate(t *testing.T) {
 
 	cosmosAddr := "core-api.node1.mainnet-beta.rarimo.com:443"
 
-	_, err = calldataBuilder.BuildRegisterCertificateCalldata(cosmosAddr, slavePem, "rarimo-temp", "icaopkd-list.ldif")
+	calldata, err := calldataBuilder.BuildRegisterCertificateCalldata(cosmosAddr, slavePem, "rarimo-temp", "icaopkd-list.ldif")
 	if err != nil {
 		t.Errorf("failed to build calldata: %v", err)
 	}
+
+	fmt.Printf("calldata: %v\n", hex.EncodeToString(calldata))
 }

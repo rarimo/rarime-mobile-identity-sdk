@@ -39,6 +39,9 @@ const CRsaPssSha22048Hex = "cf4edef1e314d92538b692be63d2fed3375e3a8896eca500c2bc
 // CRsaPssSha24096Hex represents the register certificate data type.
 const CRsaPssSha24096Hex = "85ac18b260684c647d824fe03fd6490ae77f29e4044816cffa686e419aa619a7"
 
+// CEcdsaSha2512 represents the register certificate data type.
+const CEcdsaSha2512 = "97f237579cf1101e32c69e3d3f2d9cbc3747a0efaa867086bfa569f8b841b25c"
+
 // ZKTypePrefix represerts the circuit zk type prefix
 const ZKTypePrefix = "Z_PER_PASSPORT"
 
@@ -322,47 +325,52 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
 	}
 
 	var slaveMemberKey []byte
+	var dataType [32]byte
 	switch pub := slaveCert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		slaveMemberKey = pub.N.Bytes()
+
+		if len(slaveMemberKey)*8 == 4096 {
+			var dataTypeHash string
+			if slaveCert.SignatureAlgorithm.String() == "SHA256-RSAPSS" {
+				dataTypeHash = CRsaPssSha24096Hex
+			} else {
+				dataTypeHash = CRsa4096Hex
+			}
+
+			dataTypeBuf, err := hex.DecodeString(dataTypeHash)
+			if err != nil {
+				return nil, err
+			}
+
+			copy(dataType[:], dataTypeBuf)
+		} else {
+			var dataTypeHash string
+			if slaveCert.SignatureAlgorithm.String() == "SHA256-RSAPSS" {
+				dataTypeHash = CRsaPssSha22048Hex
+			} else {
+				dataTypeHash = CRsa2048Hex
+			}
+
+			dataTypeBuf, err := hex.DecodeString(dataTypeHash)
+			if err != nil {
+				return nil, err
+			}
+
+			copy(dataType[:], dataTypeBuf)
+		}
 	case *ecdsa.PublicKey:
 		slaveMemberKey = pub.X.Bytes()
 		slaveMemberKey = append(slaveMemberKey, pub.Y.Bytes()...)
+
+		dataTypeBuf, err := hex.DecodeString(CEcdsaSha2512)
+		if err != nil {
+			return nil, err
+		}
+
+		copy(dataType[:], dataTypeBuf)
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
-	}
-
-	isRsaPss := slaveCert.SignatureAlgorithm.String() == "SHA256-RSAPSS"
-
-	var dataType [32]byte
-	if len(slaveMemberKey)*8 == 4096 {
-		var dataTypeHash string
-		if isRsaPss {
-			dataTypeHash = CRsaPssSha24096Hex
-		} else {
-			dataTypeHash = CRsa4096Hex
-		}
-
-		dataTypeBuf, err := hex.DecodeString(dataTypeHash)
-		if err != nil {
-			return nil, err
-		}
-
-		copy(dataType[:], dataTypeBuf)
-	} else {
-		var dataTypeHash string
-		if isRsaPss {
-			dataTypeHash = CRsaPssSha22048Hex
-		} else {
-			dataTypeHash = CRsa2048Hex
-		}
-
-		dataTypeBuf, err := hex.DecodeString(dataTypeHash)
-		if err != nil {
-			return nil, err
-		}
-
-		copy(dataType[:], dataTypeBuf)
 	}
 
 	var icaoMerkleProofSiblings [][32]byte
