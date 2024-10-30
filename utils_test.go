@@ -79,7 +79,7 @@ func TestHashKey(t *testing.T) {
 		t.Error("Error parsing big int")
 	}
 
-	result, err := identity.HashKey(bi.Bytes())
+	result, err := identity.HashPacked(bi.Bytes())
 	if err != nil {
 		t.Error(err)
 	}

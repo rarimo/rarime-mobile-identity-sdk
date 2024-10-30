@@ -264,8 +264,55 @@ func BigIntToBytes(x string) ([]byte, error) {
 	return bigInt.Bytes(), nil
 }
 
-// HashKey computes the Poseidon hash of 5 elements.
-func HashKey(x509Key []byte) (*big.Int, error) {
+// Hash512 applies poseidon2 to [32, 32] bytes long integers mod 2 ** 248
+func Hash512(key []byte) (*big.Int, error) {
+	if len(key) != 64 {
+		return nil, fmt.Errorf("key is not 64 bytes long")
+	}
+
+	var decomposed [2]*big.Int
+	for i := 0; i < 2; i++ {
+		element := new(big.Int).SetBytes(key[i*32 : (i+1)*32])
+		decomposed[i] = new(big.Int).Mod(element, new(big.Int).Exp(big.NewInt(2), big.NewInt(248), nil))
+	}
+
+	keyHash, err := poseidon.Hash(decomposed[:])
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute Poseidon hash: %v", err)
+	}
+
+	return keyHash, nil
+}
+
+// Hash1024 applies poseidon5 to [25, 25, 25, 25, 28] bytes long integers
+func Hash1024(key []byte) (*big.Int, error) {
+	if len(key) != 128 {
+		return nil, fmt.Errorf("key is not 128 bytes long")
+	}
+
+	var decomposed [5]*big.Int
+	position := len(key)
+
+	for i := 0; i < 5; i++ {
+		if position < 25 {
+			return nil, fmt.Errorf("key is too short")
+		}
+
+		element := new(big.Int).SetBytes(key[position-25 : position])
+		decomposed[i] = element
+		position -= 25
+	}
+
+	keyHash, err := poseidon.Hash(decomposed[:])
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute Poseidon hash: %v", err)
+	}
+
+	return keyHash, nil
+}
+
+// HashPacked computes the Poseidon hash of 5 elements.
+func HashPacked(x509Key []byte) (*big.Int, error) {
 	var decomposed [5]*big.Int
 	position := len(x509Key)
 

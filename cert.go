@@ -154,20 +154,22 @@ func (x *X509Util) GetSlaveCertificateIndex(slavePem []byte, mastersPem []byte) 
 		return nil, fmt.Errorf("failed to get master: %v", err)
 	}
 
-	var pubKeyRaw []byte
+	var masterCertificateIndex *big.Int
 	switch pub := slaveCert.PublicKey.(type) {
 	case *rsa.PublicKey:
-		pubKeyRaw = pub.N.Bytes()
+		pubKeyRaw := pub.N.Bytes()
+
+		masterCertificateIndex, err = HashPacked(pubKeyRaw)
+		if err != nil {
+			return nil, fmt.Errorf("failed to hash key: %v", err)
+		}
 	case *ecdsa.PublicKey:
-		pubKeyRaw = pub.X.Bytes()
+		pubKeyRaw := pub.X.Bytes()
 		pubKeyRaw = append(pubKeyRaw, pub.Y.Bytes()...)
+
+		masterCertificateIndex, err = Hash512(pubKeyRaw)
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
-	}
-
-	masterCertificateIndex, err := HashKey(pubKeyRaw)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash key: %v", err)
 	}
 
 	return masterCertificateIndex.Bytes(), nil
