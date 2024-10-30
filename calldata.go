@@ -264,24 +264,14 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 }
 
 // BuildRegisterCertificateCalldata builds the calldata for the register certificate function.
-func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
-	masterCertificates []byte,
-	slavePem []byte,
-	masterCertificatesBucketname string,
-	masterCertificatesFilename string,
-) ([]byte, error) {
-	mastersPem, err := LoadMasterCertificatesPem(masterCertificatesBucketname, masterCertificatesFilename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load master certificates pem: %v", err)
-	}
-
-	icaoTree, err := mt.BuildTreeFromCollection(masterCertificates)
+func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem []byte, slavePem []byte) ([]byte, error) {
+	icaoTree, err := mt.BuildTreeFromCollection(masterCertificatesPem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build tree from collection: %v", err)
 	}
 
 	x := X509Util{}
-	slaveCert, masterCert, err := x.GetMaster(slavePem, mastersPem)
+	slaveCert, masterCert, err := x.GetMaster(slavePem, masterCertificatesPem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get master: %v", err)
 	}
@@ -295,6 +285,8 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate inclusion proof: %v", err)
 	}
+
+	fmt.Println("icaoMerkleProof root:", hex.EncodeToString(icaoTree.Root()))
 
 	if len(icaoMerkleProof.Siblings) == 0 {
 		return nil, fmt.Errorf("failed to generate inclusion proof: no siblings")

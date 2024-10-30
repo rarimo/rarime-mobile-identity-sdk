@@ -42,9 +42,14 @@ func TestBuildRegisterCertificate(t *testing.T) {
 		t.Errorf("failed to read slave pem: %v", err)
 	}
 
+	mastersPem, err := os.ReadFile("assets/masters.pem")
+	if err != nil {
+		t.Errorf("failed to read masters pem: %v", err)
+	}
+
 	calldataBuilder := &identity.CallDataBuilder{}
 
-	calldata, err := calldataBuilder.BuildRegisterCertificateCalldata([]byte{}, slavePem, "rarimo-temp", "icaopkd-list.ldif")
+	calldata, err := calldataBuilder.BuildRegisterCertificateCalldata(mastersPem, slavePem)
 	if err != nil {
 		t.Errorf("failed to build calldata: %v", err)
 	}
