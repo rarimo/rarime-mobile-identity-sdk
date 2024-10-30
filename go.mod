@@ -10,7 +10,7 @@ require (
 	github.com/ethereum/go-ethereum v1.14.9
 	github.com/iden3/go-iden3-crypto v0.0.16
 	github.com/rarimo/certificate-transparency-go v0.0.0-20241028131422-3b57d6495419
-	github.com/rarimo/ldif-sdk v0.4.7
+	github.com/rarimo/ldif-sdk v0.4.8
 	github.com/rarimo/zkp-iden3-exposer v0.1.1
 	github.com/stretchr/testify v1.9.0
 	github.com/tyler-smith/go-bip32 v1.0.0
