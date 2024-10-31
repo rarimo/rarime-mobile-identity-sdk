@@ -286,8 +286,6 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem
 		return nil, fmt.Errorf("failed to generate inclusion proof: %v", err)
 	}
 
-	fmt.Println("icaoMerkleProof root:", hex.EncodeToString(icaoTree.Root()))
-
 	if len(icaoMerkleProof.Siblings) == 0 {
 		return nil, fmt.Errorf("failed to generate inclusion proof: no siblings")
 	}
