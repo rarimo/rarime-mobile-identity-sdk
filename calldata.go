@@ -290,18 +290,24 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem
 		return nil, fmt.Errorf("failed to generate inclusion proof: no siblings")
 	}
 
+	icaoMemberSignature := slaveCert.Signature
+
 	var icaoMemberKey []byte
 	switch pub := masterCert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		icaoMemberKey = pub.N.Bytes()
 	case *ecdsa.PublicKey:
 		icaoMemberKey = pub.X.Bytes()
+
 		icaoMemberKey = append(icaoMemberKey, pub.Y.Bytes()...)
+
+		if len(icaoMemberSignature) > len(icaoMemberKey) {
+			icaoMemberSignature = icaoMemberSignature[len(icaoMemberSignature)-len(icaoMemberKey):]
+		}
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}
 
-	icaoMemberSignature := slaveCert.Signature
 	x509SignedAttributes := slaveCert.RawTBSCertificate
 
 	x509KeyOffset, err := x.FindKeyPositionInSignedAttributes(slaveCert)
