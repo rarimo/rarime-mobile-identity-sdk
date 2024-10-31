@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -13,6 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/iden3/go-iden3-crypto/keccak256"
 	"github.com/rarimo/ldif-sdk/mt"
+	"golang.org/x/crypto/cryptobyte"
+	"golang.org/x/crypto/cryptobyte/asn1"
 )
 
 // PNoAaHex represents the register data type.
@@ -290,20 +293,25 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem
 		return nil, fmt.Errorf("failed to generate inclusion proof: no siblings")
 	}
 
-	icaoMemberSignature := slaveCert.Signature
-
+	var icaoMemberSignature []byte
 	var icaoMemberKey []byte
+
 	switch pub := masterCert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		icaoMemberKey = pub.N.Bytes()
+
+		icaoMemberSignature = slaveCert.Signature
 	case *ecdsa.PublicKey:
 		icaoMemberKey = pub.X.Bytes()
 
 		icaoMemberKey = append(icaoMemberKey, pub.Y.Bytes()...)
 
-		if len(icaoMemberSignature) > len(icaoMemberKey) {
-			icaoMemberSignature = icaoMemberSignature[len(icaoMemberSignature)-len(icaoMemberKey):]
+		slaveCertSignatureR, slaveCertSignaturS, err := parseECDSASignature(slaveCert.Signature)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse ECDSA signature: %v", err)
 		}
+
+		icaoMemberSignature = append(slaveCertSignatureR, slaveCertSignaturS...)
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}
@@ -457,4 +465,17 @@ func (s *CallDataBuilder) BuildRevoceCalldata(
 	}
 
 	return abi.Pack("revoke", identityKeyInt, passport)
+}
+
+func parseECDSASignature(sig []byte) (r, s []byte, err error) {
+	var inner cryptobyte.String
+	input := cryptobyte.String(sig)
+	if !input.ReadASN1(&inner, asn1.SEQUENCE) ||
+		!input.Empty() ||
+		!inner.ReadASN1Integer(&r) ||
+		!inner.ReadASN1Integer(&s) ||
+		!inner.Empty() {
+		return nil, nil, errors.New("invalid ASN.1")
+	}
+	return r, s, nil
 }
