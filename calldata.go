@@ -312,6 +312,10 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem
 		}
 
 		icaoMemberSignature = append(slaveCertSignatureR, slaveCertSignaturS...)
+		icaoMemberSignature, err = NormalizeSignatureWithCurve(icaoMemberSignature, pub.Curve)
+		if err != nil {
+			return nil, fmt.Errorf("failed to normalize signature with curve: %v", err)
+		}
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}

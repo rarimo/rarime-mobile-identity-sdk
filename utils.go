@@ -3,6 +3,7 @@ package identity
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -372,6 +373,35 @@ func NormalizeSignature(signature []byte) ([]byte, error) {
 	resultSignature := append(r.FillBytes(resR), s.FillBytes(resS)...)
 
 	return resultSignature, nil
+}
+
+// NormalizeSignatureWithCurve normalizes the signature with a curve.
+func NormalizeSignatureWithCurve(signature []byte, curve elliptic.Curve) ([]byte, error) {
+	pointSize := len(signature) / 2
+
+	r := new(big.Int).SetBytes(signature[:pointSize])
+	s := new(big.Int).SetBytes(signature[pointSize:])
+
+	n := curve.Params().N
+	lowSMax := getLowSMax(curve)
+
+	if s.Cmp(lowSMax) == 1 {
+		s = s.Sub(n, s)
+	}
+
+	resR := make([]byte, pointSize)
+	resS := make([]byte, pointSize)
+
+	resultSignature := append(r.FillBytes(resR), s.FillBytes(resS)...)
+
+	return resultSignature, nil
+}
+
+func getLowSMax(curve elliptic.Curve) *big.Int {
+	n := curve.Params().N
+	lowSMax := new(big.Int).Rsh(n, 1) // lowSMax = N / 2
+
+	return lowSMax
 }
 
 func calculateSmartChunkingNumber(bytesNumber int) int {
