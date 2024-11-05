@@ -315,7 +315,7 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem
 		return nil, fmt.Errorf("failed to find expiration position in signed attributes: %v", err)
 	}
 
-	dispatcher, err := retriveCertificateRegistrationDispatcher(slaveCert)
+	dispatcher, err := retriveCertificateRegistrationDispatcher(masterCert, slaveCert)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve certificate registration dispatcher and slave key: %v", err)
 	}
@@ -413,40 +413,52 @@ func (s *CallDataBuilder) BuildRevoceCalldata(
 	return abi.Pack("revoke", identityKeyInt, passport)
 }
 
-func retriveCertificateRegistrationDispatcher(cert *x509.Certificate) ([]byte, error) {
-	switch pub := cert.PublicKey.(type) {
+func retriveCertificateRegistrationDispatcher(
+	masterCert *x509.Certificate,
+	slaveCert *x509.Certificate,
+) ([]byte, error) {
+	switch pub := masterCert.PublicKey.(type) {
 	case *rsa.PublicKey:
-		return retriveCertificateRegistrationDispatcherForRSAFamily(cert)
+		return retriveCertificateRegistrationDispatcherForRSAFamily(masterCert, slaveCert)
 	case *ecdsa.PublicKey:
-		return retriveCertificateRegistrationDispatcherForECDSAFamily(cert)
+		return retriveCertificateRegistrationDispatcherForECDSAFamily(masterCert, slaveCert)
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}
 }
 
-func retriveCertificateRegistrationDispatcherForRSAFamily(cert *x509.Certificate) ([]byte, error) {
-	switch pub := cert.PublicKey.(type) {
+func retriveCertificateRegistrationDispatcherForRSAFamily(
+	masterCert *x509.Certificate,
+	slaveCert *x509.Certificate,
+) ([]byte, error) {
+	var slavePubKeySizeInBits string
+	switch pub := slaveCert.PublicKey.(type) {
 	case *rsa.PublicKey:
-		rawPubKeyData := pub.N.Bytes()
+		slavePubKeySizeInBits = fmt.Sprintf("%v", len(pub.N.Bytes())*8)
+	default:
+		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+	}
 
+	switch pub := masterCert.PublicKey.(type) {
+	case *rsa.PublicKey:
 		var dispatcherName string
-		switch cert.SignatureAlgorithm {
+		switch slaveCert.SignatureAlgorithm {
 		case x509.SHA1WithRSA:
-			dispatcherName = "C_RSA_SHA1_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+			dispatcherName = "C_RSA_SHA1_" + slavePubKeySizeInBits
 		case x509.SHA256WithRSA:
-			dispatcherName = "C_RSA_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+			dispatcherName = "C_RSA_" + slavePubKeySizeInBits
 		case x509.SHA384WithRSA:
-			dispatcherName = "C_RSA_SHA384_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+			dispatcherName = "C_RSA_SHA384_" + slavePubKeySizeInBits
 		case x509.SHA512WithRSA:
-			dispatcherName = "C_RSA_SHA512_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+			dispatcherName = "C_RSA_SHA512_" + slavePubKeySizeInBits
 		case x509.SHA256WithRSAPSS:
-			dispatcherName = "C_RSAPSS_SHA2_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+			dispatcherName = "C_RSAPSS_SHA2_" + slavePubKeySizeInBits
 		case x509.SHA384WithRSAPSS:
-			dispatcherName = "C_RSAPSS_SHA384_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+			dispatcherName = "C_RSAPSS_SHA384_" + slavePubKeySizeInBits
 		case x509.SHA512WithRSAPSS:
-			dispatcherName = "C_RSAPSS_SHA512_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+			dispatcherName = "C_RSAPSS_SHA512_" + slavePubKeySizeInBits
 		default:
-			return nil, fmt.Errorf("unsupported certificate signature algorithm: %v", cert.SignatureAlgorithm.String())
+			return nil, fmt.Errorf("unsupported certificate signature algorithm: %v", slaveCert.SignatureAlgorithm.String())
 		}
 
 		return keccak256.Hash([]byte(dispatcherName)), nil
@@ -455,12 +467,21 @@ func retriveCertificateRegistrationDispatcherForRSAFamily(cert *x509.Certificate
 	}
 }
 
-func retriveCertificateRegistrationDispatcherForECDSAFamily(cert *x509.Certificate) ([]byte, error) {
-	switch pub := cert.PublicKey.(type) {
+func retriveCertificateRegistrationDispatcherForECDSAFamily(
+	masterCert *x509.Certificate,
+	slaveCert *x509.Certificate,
+) ([]byte, error) {
+	var slavePubKeySizeInBits string
+	switch pub := slaveCert.PublicKey.(type) {
 	case *ecdsa.PublicKey:
 		rawPubKeyData := append(pub.X.Bytes(), pub.Y.Bytes()...)
-		pubKeySizeInBits := fmt.Sprintf("%v", len(rawPubKeyData)*8)
+		slavePubKeySizeInBits = fmt.Sprintf("%v", len(rawPubKeyData)*8)
+	default:
+		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+	}
 
+	switch pub := masterCert.PublicKey.(type) {
+	case *ecdsa.PublicKey:
 		var curveName string
 		switch pub.Curve.Params().Name {
 		case "P-224":
@@ -474,17 +495,17 @@ func retriveCertificateRegistrationDispatcherForECDSAFamily(cert *x509.Certifica
 		}
 
 		var dispatcherName string
-		switch cert.SignatureAlgorithm {
+		switch slaveCert.SignatureAlgorithm {
 		case x509.ECDSAWithSHA1:
-			dispatcherName = "C_ECDSA_" + curveName + "_SHA1_" + pubKeySizeInBits
+			dispatcherName = "C_ECDSA_" + curveName + "_SHA1_" + slavePubKeySizeInBits
 		case x509.ECDSAWithSHA256:
-			dispatcherName = "C_ECDSA_" + curveName + "_SHA2_" + pubKeySizeInBits
+			dispatcherName = "C_ECDSA_" + curveName + "_SHA2_" + slavePubKeySizeInBits
 		case x509.ECDSAWithSHA384:
-			dispatcherName = "C_ECDSA_" + curveName + "_SHA384_" + pubKeySizeInBits
+			dispatcherName = "C_ECDSA_" + curveName + "_SHA384_" + slavePubKeySizeInBits
 		case x509.ECDSAWithSHA512:
-			dispatcherName = "C_ECDSA_" + curveName + "_SHA512_" + pubKeySizeInBits
+			dispatcherName = "C_ECDSA_" + curveName + "_SHA512_" + slavePubKeySizeInBits
 		default:
-			return nil, fmt.Errorf("unsupported certificate signature algorithm: %v", cert.SignatureAlgorithm.String())
+			return nil, fmt.Errorf("unsupported certificate signature algorithm: %v", slaveCert.SignatureAlgorithm.String())
 		}
 
 		fmt.Println(dispatcherName)
