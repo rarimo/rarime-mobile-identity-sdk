@@ -12,13 +12,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"math/big"
+
+	asn1Crypto "golang.org/x/crypto/cryptobyte/asn1"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
 	"github.com/rarimo/ldif-sdk/ldif"
+	"golang.org/x/crypto/cryptobyte"
 )
 
 const smartChunking2BlockSize uint64 = 512
@@ -410,6 +414,19 @@ func calculateSmartChunkingNumber(bytesNumber int) int {
 	}
 
 	return 64
+}
+
+func parseECDSASignature(sig []byte) (r, s []byte, err error) {
+	var inner cryptobyte.String
+	input := cryptobyte.String(sig)
+	if !input.ReadASN1(&inner, asn1Crypto.SEQUENCE) ||
+		!input.Empty() ||
+		!inner.ReadASN1Integer(&r) ||
+		!inner.ReadASN1Integer(&s) ||
+		!inner.Empty() {
+		return nil, nil, errors.New("invalid ASN.1")
+	}
+	return r, s, nil
 }
 
 // CalculateHmacMessage calculates the HMAC message.

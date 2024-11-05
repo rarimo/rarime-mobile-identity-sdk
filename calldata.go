@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -13,9 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/iden3/go-iden3-crypto/keccak256"
+	"github.com/rarimo/certificate-transparency-go/x509"
 	"github.com/rarimo/ldif-sdk/mt"
-	"golang.org/x/crypto/cryptobyte"
-	"golang.org/x/crypto/cryptobyte/asn1"
 )
 
 // PNoAaHex represents the register data type.
@@ -29,21 +27,6 @@ const PEcdsaSha12704Hex = "b8abd3b1d40edd7da5ec75a9204661d45e63c046b5a19626a7604
 
 // PRsaSha126883Hex represents the register data type.
 const PRsaSha126883Hex = "8dc1b8b03716166cd99f5b390f2c6924085b150659e0cb3ca421ab47a1e65e09"
-
-// CRsa4096Hex represents the register certificate data type.
-const CRsa4096Hex = "16a6ebfa039c78163278bbd4ec27579c8c8939b01f1b3f6fb029c9682991cb5b"
-
-// CRsa2048Hex represents the register certificate data type.
-const CRsa2048Hex = "bf09b046e1fd32abb843f6ee4422c076a6fb365390d5be71020535c149781da1"
-
-// CRsaPssSha22048Hex represents the register certificate data type.
-const CRsaPssSha22048Hex = "cf4edef1e314d92538b692be63d2fed3375e3a8896eca500c2bcce6954b1fe37"
-
-// CRsaPssSha24096Hex represents the register certificate data type.
-const CRsaPssSha24096Hex = "85ac18b260684c647d824fe03fd6490ae77f29e4044816cffa686e419aa619a7"
-
-// CEcdsaSecp384R1Sha2512 represents the register certificate data type.
-const CEcdsaSecp384R1Sha2512 = "e2c232f7445df5c13a172ccc4ef65efadf0175b0618e736b6e4e7c64033d1b3e"
 
 // ZKTypePrefix represerts the circuit zk type prefix
 const ZKTypePrefix = "Z_PER_PASSPORT"
@@ -332,54 +315,13 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem
 		return nil, fmt.Errorf("failed to find expiration position in signed attributes: %v", err)
 	}
 
-	var slaveMemberKey []byte
-	var dataType [32]byte
-	switch pub := slaveCert.PublicKey.(type) {
-	case *rsa.PublicKey:
-		slaveMemberKey = pub.N.Bytes()
-
-		if len(slaveMemberKey)*8 == 4096 {
-			var dataTypeHash string
-			if slaveCert.SignatureAlgorithm.String() == "SHA256-RSAPSS" {
-				dataTypeHash = CRsaPssSha24096Hex
-			} else {
-				dataTypeHash = CRsa4096Hex
-			}
-
-			dataTypeBuf, err := hex.DecodeString(dataTypeHash)
-			if err != nil {
-				return nil, err
-			}
-
-			copy(dataType[:], dataTypeBuf)
-		} else {
-			var dataTypeHash string
-			if slaveCert.SignatureAlgorithm.String() == "SHA256-RSAPSS" {
-				dataTypeHash = CRsaPssSha22048Hex
-			} else {
-				dataTypeHash = CRsa2048Hex
-			}
-
-			dataTypeBuf, err := hex.DecodeString(dataTypeHash)
-			if err != nil {
-				return nil, err
-			}
-
-			copy(dataType[:], dataTypeBuf)
-		}
-	case *ecdsa.PublicKey:
-		slaveMemberKey = pub.X.Bytes()
-		slaveMemberKey = append(slaveMemberKey, pub.Y.Bytes()...)
-
-		dataTypeBuf, err := hex.DecodeString(CEcdsaSecp384R1Sha2512)
-		if err != nil {
-			return nil, err
-		}
-
-		copy(dataType[:], dataTypeBuf)
-	default:
-		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+	dispatcher, err := retriveCertificateRegistrationDispatcher(slaveCert)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve certificate registration dispatcher and slave key: %v", err)
 	}
+
+	var dataType [32]byte
+	copy(dataType[:], dispatcher)
 
 	var icaoMerkleProofSiblings [][32]byte
 	for _, sibling := range icaoMerkleProof.Siblings {
@@ -471,15 +413,85 @@ func (s *CallDataBuilder) BuildRevoceCalldata(
 	return abi.Pack("revoke", identityKeyInt, passport)
 }
 
-func parseECDSASignature(sig []byte) (r, s []byte, err error) {
-	var inner cryptobyte.String
-	input := cryptobyte.String(sig)
-	if !input.ReadASN1(&inner, asn1.SEQUENCE) ||
-		!input.Empty() ||
-		!inner.ReadASN1Integer(&r) ||
-		!inner.ReadASN1Integer(&s) ||
-		!inner.Empty() {
-		return nil, nil, errors.New("invalid ASN.1")
+func retriveCertificateRegistrationDispatcher(cert *x509.Certificate) ([]byte, error) {
+	switch pub := cert.PublicKey.(type) {
+	case *rsa.PublicKey:
+		return retriveCertificateRegistrationDispatcherForRSAFamily(cert)
+	case *ecdsa.PublicKey:
+		return retriveCertificateRegistrationDispatcherForECDSAFamily(cert)
+	default:
+		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}
-	return r, s, nil
+}
+
+func retriveCertificateRegistrationDispatcherForRSAFamily(cert *x509.Certificate) ([]byte, error) {
+	switch pub := cert.PublicKey.(type) {
+	case *rsa.PublicKey:
+		rawPubKeyData := pub.N.Bytes()
+
+		var dispatcherName string
+		switch cert.SignatureAlgorithm {
+		case x509.SHA1WithRSA:
+			dispatcherName = "C_RSA_SHA1_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+		case x509.SHA256WithRSA:
+			dispatcherName = "C_RSA_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+		case x509.SHA384WithRSA:
+			dispatcherName = "C_RSA_SHA384_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+		case x509.SHA512WithRSA:
+			dispatcherName = "C_RSA_SHA512_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+		case x509.SHA256WithRSAPSS:
+			dispatcherName = "C_RSAPSS_SHA2_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+		case x509.SHA384WithRSAPSS:
+			dispatcherName = "C_RSAPSS_SHA384_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+		case x509.SHA512WithRSAPSS:
+			dispatcherName = "C_RSAPSS_SHA512_" + fmt.Sprintf("%d", len(rawPubKeyData)*8)
+		default:
+			return nil, fmt.Errorf("unsupported certificate signature algorithm: %v", cert.SignatureAlgorithm.String())
+		}
+
+		return keccak256.Hash([]byte(dispatcherName)), nil
+	default:
+		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+	}
+}
+
+func retriveCertificateRegistrationDispatcherForECDSAFamily(cert *x509.Certificate) ([]byte, error) {
+	switch pub := cert.PublicKey.(type) {
+	case *ecdsa.PublicKey:
+		rawPubKeyData := append(pub.X.Bytes(), pub.Y.Bytes()...)
+		pubKeySizeInBits := fmt.Sprintf("%v", len(rawPubKeyData)*8)
+
+		var curveName string
+		switch pub.Curve.Params().Name {
+		case "P-224":
+			curveName = "SECP224R1"
+		case "P-256":
+			curveName = "SECP256R1"
+		case "P-384":
+			curveName = "SECP384R1"
+		case "P-521":
+			curveName = "SECP521R1"
+		}
+
+		var dispatcherName string
+		switch cert.SignatureAlgorithm {
+		case x509.ECDSAWithSHA1:
+			dispatcherName = "C_ECDSA_" + curveName + "_SHA1_" + pubKeySizeInBits
+		case x509.ECDSAWithSHA256:
+			dispatcherName = "C_ECDSA_" + curveName + "_SHA2_" + pubKeySizeInBits
+		case x509.ECDSAWithSHA384:
+			dispatcherName = "C_ECDSA_" + curveName + "_SHA384_" + pubKeySizeInBits
+		case x509.ECDSAWithSHA512:
+			dispatcherName = "C_ECDSA_" + curveName + "_SHA512_" + pubKeySizeInBits
+		default:
+			return nil, fmt.Errorf("unsupported certificate signature algorithm: %v", cert.SignatureAlgorithm.String())
+		}
+
+		fmt.Println(dispatcherName)
+		fmt.Println(hex.EncodeToString(keccak256.Hash([]byte(dispatcherName))))
+
+		return keccak256.Hash([]byte(dispatcherName)), nil
+	default:
+		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+	}
 }
