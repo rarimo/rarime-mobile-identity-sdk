@@ -118,7 +118,7 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 		return nil, fmt.Errorf("failed to retrive registration passport data: %v", err)
 	}
 
-	zkProof, proofPoints, err := PrepareZKProofForEVMVerification(proofJSON)
+	zkProof, proofPoints, err := prepareZKProofForEVMVerification(proofJSON)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare zk proof for evm verification: %v", err)
 	}

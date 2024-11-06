@@ -477,8 +477,7 @@ func RSAPublicDecrypt(pub *rsa.PublicKey, sig []byte) ([]byte, error) {
 	return m.Bytes(), nil
 }
 
-// PrepareZKProofForEVMVerification prepares a ZK proof for EVM verification.
-func PrepareZKProofForEVMVerification(proofJSON []byte) (*ZkProof, *VerifierHelperProofPoints, error) {
+func prepareZKProofForEVMVerification(proofJSON []byte) (*ZkProof, *VerifierHelperProofPoints, error) {
 	zkProof := new(ZkProof)
 	if err := json.Unmarshal(proofJSON, zkProof); err != nil {
 		return nil, nil, err
