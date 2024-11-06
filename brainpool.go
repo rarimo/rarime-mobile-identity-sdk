@@ -200,66 +200,85 @@ func initP512r1() {
 	p512r1 = newrcurve(twisted, params, z)
 }
 
+// P160t1 returns a Curve which implements the brainpoolP160t1 curve.
 func P160t1() elliptic.Curve {
 	once.Do(initAll)
 	return p160t1
 }
 
+// P192t1 returns a Curve which implements the brainpoolP192t1 curve.
 func P192t1() elliptic.Curve {
 	once.Do(initAll)
 	return p192t1
 }
 
+// P224t1 returns a Curve which implements the brainpoolP224t1 curve.
+func P224t1() elliptic.Curve {
+	once.Do(initAll)
+	return p224t1
+}
+
+// P256t1 returns a Curve which implements the brainpoolP224t1 curve.
 func P256t1() elliptic.Curve {
 	once.Do(initAll)
 	return p256t1
 }
 
+// P320t1 returns a Curve which implements the brainpoolP320t1 curve.
 func P320t1() elliptic.Curve {
 	once.Do(initAll)
 	return p320t1
 }
 
+// P384t1 returns a Curve which implements the brainpoolP384t1 curve.
 func P384t1() elliptic.Curve {
 	once.Do(initAll)
 	return p384t1
 }
 
+// P512t1 returns a Curve which implements the brainpoolP512t1 curve.
 func P512t1() elliptic.Curve {
 	once.Do(initAll)
 	return p512t1
 }
 
+// P160r1 returns a Curve which implements the brainpoolP160r1 curve.
 func P160r1() elliptic.Curve {
 	once.Do(initAll)
 	return p160r1
 }
 
+// P192r1 returns a Curve which implements the brainpoolP192r1 curve.
 func P192r1() elliptic.Curve {
 	once.Do(initAll)
 	return p192r1
 }
 
+// P224r1 returns a Curve which implements the brainpoolP224r1 curve.
 func P224r1() elliptic.Curve {
 	once.Do(initAll)
 	return p224r1
 }
 
+// P256r1 returns a Curve which implements the brainpoolP256r1 curve.
 func P256r1() elliptic.Curve {
 	once.Do(initAll)
 	return p256r1
 }
 
+// P320r1 returns a Curve which implements the brainpoolP320r1 curve.
 func P320r1() elliptic.Curve {
 	once.Do(initAll)
 	return p320r1
 }
 
+// P384r1 returns a Curve which implements the brainpoolP384r1 curve.
 func P384r1() elliptic.Curve {
 	once.Do(initAll)
 	return p384r1
 }
 
+// P512r1 returns a Curve which implements the brainpoolP512r1 curve.
 func P512r1() elliptic.Curve {
 	once.Do(initAll)
 	return p512r1
