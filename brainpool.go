@@ -200,37 +200,66 @@ func initP512r1() {
 	p512r1 = newrcurve(twisted, params, z)
 }
 
-// P256t1 returns a Curve which implements Brainpool P256t1 (see RFC 5639, section 3.4)
+func P160t1() elliptic.Curve {
+	once.Do(initAll)
+	return p160t1
+}
+
+func P192t1() elliptic.Curve {
+	once.Do(initAll)
+	return p192t1
+}
+
 func P256t1() elliptic.Curve {
 	once.Do(initAll)
 	return p256t1
 }
 
-// P256r1 returns a Curve which implements Brainpool P256r1 (see RFC 5639, section 3.4)
-func P256r1() elliptic.Curve {
+func P320t1() elliptic.Curve {
 	once.Do(initAll)
-	return p256r1
+	return p320t1
 }
 
-// P384t1 returns a Curve which implements Brainpool P384t1 (see RFC 5639, section 3.6)
 func P384t1() elliptic.Curve {
 	once.Do(initAll)
 	return p384t1
 }
 
-// P384r1 returns a Curve which implements Brainpool P384r1 (see RFC 5639, section 3.6)
-func P384r1() elliptic.Curve {
-	once.Do(initAll)
-	return p384r1
-}
-
-// P512t1 returns a Curve which implements Brainpool P512t1 (see RFC 5639, section 3.7)
 func P512t1() elliptic.Curve {
 	once.Do(initAll)
 	return p512t1
 }
 
-// P512r1 returns a Curve which implements Brainpool P512r1 (see RFC 5639, section 3.7)
+func P160r1() elliptic.Curve {
+	once.Do(initAll)
+	return p160r1
+}
+
+func P192r1() elliptic.Curve {
+	once.Do(initAll)
+	return p192r1
+}
+
+func P224r1() elliptic.Curve {
+	once.Do(initAll)
+	return p224r1
+}
+
+func P256r1() elliptic.Curve {
+	once.Do(initAll)
+	return p256r1
+}
+
+func P320r1() elliptic.Curve {
+	once.Do(initAll)
+	return p320r1
+}
+
+func P384r1() elliptic.Curve {
+	once.Do(initAll)
+	return p384r1
+}
+
 func P512r1() elliptic.Curve {
 	once.Do(initAll)
 	return p512r1
