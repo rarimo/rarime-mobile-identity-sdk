@@ -14,7 +14,11 @@ var (
 )
 
 func initAll() {
+	initP160t1()
+	initP192t1()
+	initP224t1()
 	initP256t1()
+	initP320t1()
 	initP384t1()
 	initP512t1()
 
