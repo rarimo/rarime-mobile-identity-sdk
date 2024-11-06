@@ -31,9 +31,9 @@ const lowSMaxHex = "54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb7
 const nHex = "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7"
 
 // SignPubSignalsWithSecp256k1 signs a public signals using a private key string (hex format) and the secp256k1 curve.
-func SignPubSignalsWithSecp256k1(privateKey string, pubSignalsJson []byte) (string, error) {
+func SignPubSignalsWithSecp256k1(privateKey string, pubSignalsJSON []byte) (string, error) {
 	var pubSignals []string
-	if err := json.Unmarshal(pubSignalsJson, &pubSignals); err != nil {
+	if err := json.Unmarshal(pubSignalsJSON, &pubSignals); err != nil {
 		return "", fmt.Errorf("error decoding  pub  signals: %v", err)
 	}
 
@@ -220,10 +220,31 @@ func pubKeyPemToRaw(pubKeyPem []byte) ([]byte, bool, error) {
 	return raw, isEcdsa, nil
 }
 
-func parsePemToPubKey(pubKeyPem []byte) (interface{}, error) {
+// ParsePemToPubKey parses a public key PEM to a public key.
+func ParsePemToPubKey(pubKeyPem []byte) (interface{}, error) {
 	block, _ := pem.Decode(pubKeyPem)
 	if block == nil {
 		return nil, fmt.Errorf("error decoding public key pem")
+	}
+
+	var info publicKeyInfo
+	_, err := asn1.Unmarshal(block.Bytes, &info)
+	if err == nil {
+		if info.Algorithm.Algorithm.String() == brainpoolP256CurveOID {
+			var raw []byte
+			raw = append(raw, info.SubjectPublicKey.Bytes[1:]...)
+
+			var curve elliptic.Curve
+			curve = elliptic.P256()
+
+			x, y := elliptic.Unmarshal(curve, raw)
+
+			return &ecdsa.PublicKey{
+				Curve: curve,
+				X:     x,
+				Y:     y,
+			}, nil
+		}
 	}
 
 	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
@@ -505,31 +526,4 @@ func PrepareZKProofForEVMVerification(proofJSON []byte) (*ZkProof, *VerifierHelp
 	}
 
 	return zkProof, proofPoints, nil
-}
-
-type algorithmIdentifier struct {
-	Algorithm  asn1.ObjectIdentifier
-	Parameters ecParameters
-}
-
-type publicKeyInfo struct {
-	Algorithm        algorithmIdentifier
-	SubjectPublicKey asn1.BitString
-}
-
-type ecParameters struct {
-	Version *big.Int
-	FieldID fieldID
-	Curve   curve
-}
-
-type fieldID struct {
-	FieldType asn1.ObjectIdentifier
-	Data      *big.Int
-}
-
-type curve struct {
-	Placeholder asn1.RawContent
-	X           asn1.RawContent
-	Y           asn1.RawContent
 }

@@ -324,7 +324,7 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 		return registrationPassportData, nil
 	}
 
-	aaPubKey, err := parsePemToPubKey(aaPubKeyPem)
+	aaPubKey, err := ParsePemToPubKey(aaPubKeyPem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse pem to pubkey: %v", err)
 	}
@@ -354,7 +354,7 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 			return nil, fmt.Errorf("failed to normalize signature with curve: %v", err)
 		}
 
-		dispatcherName := fmt.Sprintf("P_ECDSA_SHA_%v", ecSizeInBits)
+		dispatcherName := fmt.Sprintf("P_ECDSA_SHA1_%v", ecSizeInBits)
 		registrationPassportData.AADataType = keccak256.Hash([]byte(dispatcherName))
 
 		return registrationPassportData, nil

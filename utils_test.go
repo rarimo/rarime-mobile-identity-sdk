@@ -1,9 +1,11 @@
 package identity_test
 
 import (
+	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"math/big"
+	"os"
 	"testing"
 
 	"github.com/rarimo/ldif-sdk/ldif"
@@ -101,4 +103,17 @@ func TestLdif(t *testing.T) {
 	}
 
 	t.Log(pem)
+}
+
+func TestBrainpoolPublicKeyParsing(t *testing.T) {
+	pubKeyPem, _ := os.ReadFile("assets/pubKey.pem")
+
+	pubKey, err := identity.ParsePemToPubKey(pubKeyPem)
+	if err != nil {
+		t.Fatalf("Error parsing public key: %v", err)
+	}
+
+	ecdsaPubKey, _ := pubKey.(*ecdsa.PublicKey)
+
+	t.Logf("Public key curve name: %v", ecdsaPubKey.Curve.Params().Name)
 }
