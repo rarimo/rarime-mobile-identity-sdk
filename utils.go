@@ -220,6 +220,20 @@ func pubKeyPemToRaw(pubKeyPem []byte) ([]byte, bool, error) {
 	return raw, isEcdsa, nil
 }
 
+func parsePemToPubKey(pubKeyPem []byte) (interface{}, error) {
+	block, _ := pem.Decode(pubKeyPem)
+	if block == nil {
+		return nil, fmt.Errorf("error decoding public key pem")
+	}
+
+	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing public key: %v", err)
+	}
+
+	return pubKey, nil
+}
+
 func pemToRsaPubKey(pubKeyPem []byte) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode(pubKeyPem)
 	if block == nil {
@@ -348,37 +362,6 @@ func HashPacked(x509Key []byte) (*big.Int, error) {
 	return keyHash, nil
 }
 
-// NormalizeSignature normalizes the signature.
-func NormalizeSignature(signature []byte) ([]byte, error) {
-	if len(signature) != 64 {
-		return signature, nil
-	}
-
-	r := new(big.Int).SetBytes(signature[:len(signature)/2])
-	s := new(big.Int).SetBytes(signature[len(signature)/2:])
-
-	lowSMax, ok := new(big.Int).SetString(lowSMaxHex, 16)
-	if !ok {
-		return nil, fmt.Errorf("error converting lowSMaxHex to big int")
-	}
-
-	n, ok := new(big.Int).SetString(nHex, 16)
-	if !ok {
-		return nil, fmt.Errorf("error converting nHex to big int")
-	}
-
-	if s.Cmp(lowSMax) == 1 {
-		s = s.Sub(n, s)
-	}
-
-	resR := make([]byte, 32)
-	resS := make([]byte, 32)
-
-	resultSignature := append(r.FillBytes(resR), s.FillBytes(resS)...)
-
-	return resultSignature, nil
-}
-
 // NormalizeSignatureWithCurve normalizes the signature with a curve.
 func NormalizeSignatureWithCurve(signature []byte, curve elliptic.Curve) ([]byte, error) {
 	pointSize := len(signature) / 2
@@ -457,6 +440,71 @@ func CalculateAnonymousID(dg1 []byte, eventID string) ([]byte, error) {
 	sha256Hash.Write(eventIDInt.Bytes())
 
 	return sha256Hash.Sum(nil), nil
+}
+
+// RSAPublicDecrypt decrypts an RSA signature
+func RSAPublicDecrypt(pub *rsa.PublicKey, sig []byte) ([]byte, error) {
+	k := pub.Size()
+	if k < 11 || k != len(sig) {
+		return nil, fmt.Errorf("invalid signature length")
+	}
+
+	c := new(big.Int).SetBytes(sig)
+	e := big.NewInt(int64(pub.E))
+	m := new(big.Int).Exp(c, e, pub.N)
+
+	return m.Bytes(), nil
+}
+
+// PrepareZKProofForEVMVerification prepares a ZK proof for EVM verification.
+func PrepareZKProofForEVMVerification(proofJSON []byte) (*ZkProof, *VerifierHelperProofPoints, error) {
+	zkProof := new(ZkProof)
+	if err := json.Unmarshal(proofJSON, zkProof); err != nil {
+		return nil, nil, err
+	}
+
+	var a [2]*big.Int
+	for index, val := range zkProof.Proof.A[:2] {
+		aI, ok := new(big.Int).SetString(val, 10)
+		if !ok {
+			return nil, nil, fmt.Errorf("error setting a[%d]: %v", index, val)
+		}
+
+		a[index] = aI
+	}
+
+	var b [2][2]*big.Int
+	for index, val := range zkProof.Proof.B[:2] {
+		for index2, val2 := range val[:2] {
+			bI, ok := new(big.Int).SetString(val2, 10)
+			if !ok {
+				return nil, nil, fmt.Errorf("error setting b[%d][%d]: %v", index, index2, val2)
+			}
+
+			b[index][index2] = bI
+		}
+	}
+
+	b[0][0], b[0][1] = b[0][1], b[0][0]
+	b[1][0], b[1][1] = b[1][1], b[1][0]
+
+	var c [2]*big.Int
+	for index, val := range zkProof.Proof.C[:2] {
+		cI, ok := new(big.Int).SetString(val, 10)
+		if !ok {
+			return nil, nil, fmt.Errorf("error setting c[%d]: %v", index, val)
+		}
+
+		c[index] = cI
+	}
+
+	proofPoints := &VerifierHelperProofPoints{
+		A: a,
+		B: b,
+		C: c,
+	}
+
+	return zkProof, proofPoints, nil
 }
 
 type algorithmIdentifier struct {
