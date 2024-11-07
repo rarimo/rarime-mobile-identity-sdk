@@ -2,7 +2,6 @@ package identity
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -178,46 +177,6 @@ func SmartChunking2(bits []int64, blockNumber uint64) []int64 {
 	}
 
 	return result
-}
-
-// pubKeyPemToRaw extracts the modulus from a RSA public key PEM.
-func pubKeyPemToRaw(pubKeyPem []byte) ([]byte, bool, error) {
-	block, _ := pem.Decode(pubKeyPem)
-	if block == nil {
-		return nil, false, fmt.Errorf("error decoding public key pem")
-	}
-
-	// var info brainpool.PublicKeyInfo
-	// _, err := asn1.Unmarshal(block.Bytes, &info)
-	// if err == nil {
-	// 	if info.Algorithm.Algorithm.String() == brainpoolP256CurveOID {
-	// 		var raw []byte
-	// 		raw = append(raw, info.SubjectPublicKey.Bytes[1:]...)
-
-	// 		return raw, true, nil
-	// 	}
-	// }
-
-	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return nil, false, fmt.Errorf("error parsing public key: %v", err)
-	}
-
-	var isEcdsa bool
-	var raw []byte
-	switch pub := pubKey.(type) {
-	case *rsa.PublicKey:
-		isEcdsa = false
-		raw = pub.N.Bytes()
-	case *ecdsa.PublicKey:
-		isEcdsa = true
-		raw = pub.X.Bytes()
-		raw = append(raw, pub.Y.Bytes()...)
-	default:
-		return nil, false, fmt.Errorf("unsupported public key type: %T", pub)
-	}
-
-	return raw, isEcdsa, nil
 }
 
 // ParsePemToPubKey parses a public key PEM to a public key.
