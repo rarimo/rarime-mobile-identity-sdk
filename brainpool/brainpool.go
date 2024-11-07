@@ -303,23 +303,24 @@ func GetPublicKeyFromPem(pem *pem.Block) (*ecdsa.PublicKey, error) {
 
 	b := new(big.Int).SetBytes(publicKeyInfo.Algorithm.Parameters.Curve.B)
 
+	once.Do(initAll)
+
 	var curve elliptic.Curve
-	switch b {
-	case p160r1.params.B:
-		curve = p160r1.ToEllipticCurve()
-	case p192r1.params.B:
-		curve = p192r1.ToEllipticCurve()
-	case p224r1.params.B:
-		curve = p224r1.ToEllipticCurve()
-	case p256r1.params.B:
-		curve = p256r1.ToEllipticCurve()
-	case p320r1.params.B:
-		curve = p320r1.ToEllipticCurve()
-	case p384r1.params.B:
-		curve = p384r1.ToEllipticCurve()
-	case p512r1.params.B:
-		curve = p512r1.ToEllipticCurve()
-	default:
+	if b.Cmp(p160r1.params.B) == 0 {
+		curve = P160r1()
+	} else if b.Cmp(p192r1.params.B) == 0 {
+		curve = P192t1()
+	} else if b.Cmp(p224r1.params.B) == 0 {
+		curve = P224r1()
+	} else if b.Cmp(p256r1.params.B) == 0 {
+		curve = P256r1()
+	} else if b.Cmp(p320r1.params.B) == 0 {
+		curve = P320r1()
+	} else if b.Cmp(p384r1.params.B) == 0 {
+		curve = P384r1()
+	} else if b.Cmp(p512r1.params.B) == 0 {
+		curve = P512r1()
+	} else {
 		return nil, nil
 	}
 

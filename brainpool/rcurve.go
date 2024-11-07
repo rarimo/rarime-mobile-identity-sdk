@@ -81,7 +81,3 @@ func (curve *rcurve) ScalarMult(x1, y1 *big.Int, scalar []byte) (x, y *big.Int) 
 func (curve *rcurve) ScalarBaseMult(scalar []byte) (x, y *big.Int) {
 	return curve.fromTwisted(curve.twisted.ScalarBaseMult(scalar))
 }
-
-func (curve *rcurve) ToEllipticCurve() elliptic.Curve {
-	return curve
-}

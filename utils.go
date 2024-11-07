@@ -21,6 +21,7 @@ import (
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
 	"github.com/rarimo/ldif-sdk/ldif"
+	"github.com/rarimo/rarime-mobile-identity-sdk/brainpool"
 	"golang.org/x/crypto/cryptobyte"
 )
 
@@ -226,25 +227,14 @@ func ParsePemToPubKey(pubKeyPem []byte) (interface{}, error) {
 		return nil, fmt.Errorf("error decoding public key pem")
 	}
 
-	// var info brainpool.PublicKeyInfo
-	// _, err := asn1.Unmarshal(block.Bytes, &info)
-	// if err == nil {
-	// 	if info.Algorithm.Algorithm.String() == brainpoolP256CurveOID {
-	// 		var raw []byte
-	// 		raw = append(raw, info.SubjectPublicKey.Bytes[1:]...)
+	brainpoolPubKey, err := brainpool.GetPublicKeyFromPem(block)
+	if err != nil {
+		return nil, fmt.Errorf("error getting brainpool public key: %v", err)
+	}
 
-	// 		var curve elliptic.Curve
-	// 		curve = elliptic.P256()
-
-	// 		x, y := elliptic.Unmarshal(curve, raw)
-
-	// 		return &ecdsa.PublicKey{
-	// 			Curve: curve,
-	// 			X:     x,
-	// 			Y:     y,
-	// 		}, nil
-	// 	}
-	// }
+	if brainpoolPubKey != nil {
+		return brainpoolPubKey, nil
+	}
 
 	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
