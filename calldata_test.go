@@ -56,3 +56,20 @@ func TestBuildRegisterCertificate(t *testing.T) {
 
 	fmt.Printf("calldata: %v\n", hex.EncodeToString(calldata))
 }
+
+func TestRevokeCalldata(t *testing.T) {
+	aaPubKey, _ := os.ReadFile("assets/pubKey.pem")
+
+	identityKey, _ := hex.DecodeString("0x039f80b68aaef6e8a73cf16ad9c242bb98471926d76a7e618736adadc746615e")
+	signature, _ := hex.DecodeString("0x4a3fde41f253aeb52c2e11d453c952e035742b515d36fe5c5b038c8683b4e1653dc981f6aa8d41b6576b208709f65d72a62898095d1cff5bdae765de7b70901c")
+	ecSizeInBits := 2_704
+
+	builder := &identity.CallDataBuilder{}
+
+	calldata, err := builder.BuildRevoceCalldata(identityKey, signature, aaPubKey, ecSizeInBits)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("revoke calldata: %v", hex.EncodeToString(calldata))
+}

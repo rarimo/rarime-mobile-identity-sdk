@@ -348,7 +348,14 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 
 		return registrationPassportData, nil
 	case *ecdsa.PublicKey:
-		registrationPassportData.AAPublicKey = append(pub.X.Bytes(), pub.Y.Bytes()...)
+		pubKeyX := make([]byte, pub.Params().BitSize/8)
+		pubKeyY := make([]byte, pub.Params().BitSize/8)
+
+		copy(pubKeyX[len(pubKeyX)-len(pub.X.Bytes()):], pub.X.Bytes())
+		copy(pubKeyY[len(pubKeyY)-len(pub.Y.Bytes()):], pub.Y.Bytes())
+
+		registrationPassportData.AAPublicKey = append(pubKeyX, pubKeyY...)
+
 		registrationPassportData.AASignature, err = NormalizeSignatureWithCurve(aaSignature, pub.Curve)
 		if err != nil {
 			return nil, fmt.Errorf("failed to normalize signature with curve: %v", err)
