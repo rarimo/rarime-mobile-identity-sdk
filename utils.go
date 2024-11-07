@@ -7,7 +7,6 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/asn1"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -187,16 +186,16 @@ func pubKeyPemToRaw(pubKeyPem []byte) ([]byte, bool, error) {
 		return nil, false, fmt.Errorf("error decoding public key pem")
 	}
 
-	var info publicKeyInfo
-	_, err := asn1.Unmarshal(block.Bytes, &info)
-	if err == nil {
-		if info.Algorithm.Algorithm.String() == brainpoolP256CurveOID {
-			var raw []byte
-			raw = append(raw, info.SubjectPublicKey.Bytes[1:]...)
+	// var info brainpool.PublicKeyInfo
+	// _, err := asn1.Unmarshal(block.Bytes, &info)
+	// if err == nil {
+	// 	if info.Algorithm.Algorithm.String() == brainpoolP256CurveOID {
+	// 		var raw []byte
+	// 		raw = append(raw, info.SubjectPublicKey.Bytes[1:]...)
 
-			return raw, true, nil
-		}
-	}
+	// 		return raw, true, nil
+	// 	}
+	// }
 
 	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
@@ -227,25 +226,25 @@ func ParsePemToPubKey(pubKeyPem []byte) (interface{}, error) {
 		return nil, fmt.Errorf("error decoding public key pem")
 	}
 
-	var info publicKeyInfo
-	_, err := asn1.Unmarshal(block.Bytes, &info)
-	if err == nil {
-		if info.Algorithm.Algorithm.String() == brainpoolP256CurveOID {
-			var raw []byte
-			raw = append(raw, info.SubjectPublicKey.Bytes[1:]...)
+	// var info brainpool.PublicKeyInfo
+	// _, err := asn1.Unmarshal(block.Bytes, &info)
+	// if err == nil {
+	// 	if info.Algorithm.Algorithm.String() == brainpoolP256CurveOID {
+	// 		var raw []byte
+	// 		raw = append(raw, info.SubjectPublicKey.Bytes[1:]...)
 
-			var curve elliptic.Curve
-			curve = elliptic.P256()
+	// 		var curve elliptic.Curve
+	// 		curve = elliptic.P256()
 
-			x, y := elliptic.Unmarshal(curve, raw)
+	// 		x, y := elliptic.Unmarshal(curve, raw)
 
-			return &ecdsa.PublicKey{
-				Curve: curve,
-				X:     x,
-				Y:     y,
-			}, nil
-		}
-	}
+	// 		return &ecdsa.PublicKey{
+	// 			Curve: curve,
+	// 			X:     x,
+	// 			Y:     y,
+	// 		}, nil
+	// 	}
+	// }
 
 	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {

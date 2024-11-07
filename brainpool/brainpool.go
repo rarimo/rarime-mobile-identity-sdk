@@ -1,8 +1,10 @@
-package identity
+package brainpool
 
 import (
+	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/asn1"
+	"encoding/pem"
 	"math/big"
 	"sync"
 )
@@ -109,6 +111,7 @@ func initP160r1() {
 		N:       twisted.N,
 		BitSize: twisted.BitSize,
 	}
+	params.B, _ = new(big.Int).SetString("0x1e589a8595423412134faa2dbdec95c8d8675e58", 0)
 	params.Gx, _ = new(big.Int).SetString("0xbed5af16ea3f6a4f62938c4631eb5af7bdbcdbc3", 0)
 	params.Gy, _ = new(big.Int).SetString("0x1667cb477a1a8ec338f94741669c976316da6321", 0)
 
@@ -124,6 +127,7 @@ func initP192r1() {
 		N:       twisted.N,
 		BitSize: twisted.BitSize,
 	}
+	params.B, _ = new(big.Int).SetString("0x469a28ef7c28cca3dc721d044f4496bcca7ef4146fbf25c9", 0)
 	params.Gx, _ = new(big.Int).SetString("0xc0a0647eaab6a48753b033c56cb0f0900a2f5c4853375fd6", 0)
 	params.Gy, _ = new(big.Int).SetString("0x14b690866abd5bb88b5f4828c1490002e6773fa2fa299b8f", 0)
 	z, _ := new(big.Int).SetString("0x1B6F5CC8DB4DC7AF19458A9CB80DC2295E5EB9C3732104CB", 0)
@@ -138,6 +142,7 @@ func initP224r1() {
 		N:       twisted.N,
 		BitSize: twisted.BitSize,
 	}
+	params.B, _ = new(big.Int).SetString("0x2580f63ccfe44138870713b1a92369e33e2135d266dbb372386c400b", 0)
 	params.Gx, _ = new(big.Int).SetString("0xd9029ad2c7e5cf4340823b2a87dc68c9e4ce3174c1e6efdee12c07d", 0)
 	params.Gy, _ = new(big.Int).SetString("0x58aa56f772c0726f24c6b89e4ecdac24354b9e99caa3f6d3761402cd", 0)
 	z, _ := new(big.Int).SetString("0x2DF271E14427A346910CF7A2E6CFA7B3F484E5C2CCE1C8B730E28B3F", 0)
@@ -152,6 +157,7 @@ func initP256r1() {
 		N:       twisted.N,
 		BitSize: twisted.BitSize,
 	}
+	params.B, _ = new(big.Int).SetString("0x26dc5c6ce94a4b44f330b5d9bbd77cbf958416295cf7e1ce6bccdc18ff8c07b6", 0)
 	params.Gx, _ = new(big.Int).SetString("0x8BD2AEB9CB7E57CB2C4B482FFC81B7AFB9DE27E1E3BD23C23A4453BD9ACE3262", 0)
 	params.Gy, _ = new(big.Int).SetString("0x547EF835C3DAC4FD97F8461A14611DC9C27745132DED8E545C1D54C72F046997", 0)
 	z, _ := new(big.Int).SetString("0x3E2D4BD9597B58639AE7AA669CAB9837CF5CF20A2C852D10F655668DFC150EF0", 0)
@@ -166,6 +172,7 @@ func initP320r1() {
 		N:       twisted.N,
 		BitSize: twisted.BitSize,
 	}
+	params.B, _ = new(big.Int).SetString("0x520883949dfdbc42d3ad198640688a6fe13f41349554b49acc31dccd884539816f5eb4ac8fb1f1a6", 0)
 	params.Gx, _ = new(big.Int).SetString("0x43bd7e9afb53d8b85289bcc48ee5bfe6f20137d10a087eb6e7871e2a10a599c710af8d0d39e20611", 0)
 	params.Gy, _ = new(big.Int).SetString("0x14fdd05545ec1cc8ab4093247f77275e0743ffed117182eaa9c77877aaac6ac7d35245d1692e8ee1", 0)
 	z, _ := new(big.Int).SetString("0x15F75CAF668077F7E85B42EB01F0A81FF56ECD6191D55CB82B7D861458A18FEFC3E5AB7496F3C7B1", 0)
@@ -180,6 +187,7 @@ func initP384r1() {
 		N:       twisted.N,
 		BitSize: twisted.BitSize,
 	}
+	params.B, _ = new(big.Int).SetString("0x4a8c7dd22ce28268b39b55416f0447c2fb77de107dcd2a62e880ea53eeb62d57cb4390295dbc9943ab78696fa504c11", 0)
 	params.Gx, _ = new(big.Int).SetString("0x1D1C64F068CF45FFA2A63A81B7C13F6B8847A3E77EF14FE3DB7FCAFE0CBD10E8E826E03436D646AAEF87B2E247D4AF1E", 0)
 	params.Gy, _ = new(big.Int).SetString("0x8ABE1D7520F9C2A45CB1EB8E95CFD55262B70B29FEEC5864E19C054FF99129280E4646217791811142820341263C5315", 0)
 	z, _ := new(big.Int).SetString("0x41DFE8DD399331F7166A66076734A89CD0D2BCDB7D068E44E1F378F41ECBAE97D2D63DBC87BCCDDCCC5DA39E8589291C", 0)
@@ -194,6 +202,7 @@ func initP512r1() {
 		N:       twisted.N,
 		BitSize: twisted.BitSize,
 	}
+	params.B, _ = new(big.Int).SetString("0x3df91610a83441caea9863bc2ded5d5aa8253aa10a2ef1c98b9ac8b57f1117a72bf2c7b9e7c1ac4d77fc94cadc083e67984050b75ebae5dd2809bd638016f723", 0)
 	params.Gx, _ = new(big.Int).SetString("0x81AEE4BDD82ED9645A21322E9C4C6A9385ED9F70B5D916C1B43B62EEF4D0098EFF3B1F78E2D0D48D50D1687B93B97D5F7C6D5047406A5E688B352209BCB9F822", 0)
 	params.Gy, _ = new(big.Int).SetString("0x7DDE385D566332ECC0EABFA9CF7822FDF209F70024A57B1AA000C55B881F8111B2DCDE494A5F485E5BCA4BD88A2763AED1CA2B2FA8F0540678CD1E0F3AD80892", 0)
 	z, _ := new(big.Int).SetString("0x12EE58E6764838B69782136F0F2D3BA06E27695716054092E60A80BEDB212B64E585D90BCE13761F85C3F1D2A64E3BE8FEA2220F01EBA5EEB0F35DBD29D922AB", 0)
@@ -284,14 +293,57 @@ func P512r1() elliptic.Curve {
 	return p512r1
 }
 
-type algorithmIdentifier struct {
-	Algorithm  asn1.ObjectIdentifier
-	Parameters ecParameters
+// GetPublicKeyFromPem extracts a public key from a PEM block.
+func GetPublicKeyFromPem(pem *pem.Block) (*ecdsa.PublicKey, error) {
+	var publicKeyInfo publicKeyInfo
+	_, err := asn1.Unmarshal(pem.Bytes, &publicKeyInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	b := new(big.Int).SetBytes(publicKeyInfo.Algorithm.Parameters.Curve.B)
+
+	var curve elliptic.Curve
+	switch b {
+	case p160r1.params.B:
+		curve = p160r1.ToEllipticCurve()
+	case p192r1.params.B:
+		curve = p192r1.ToEllipticCurve()
+	case p224r1.params.B:
+		curve = p224r1.ToEllipticCurve()
+	case p256r1.params.B:
+		curve = p256r1.ToEllipticCurve()
+	case p320r1.params.B:
+		curve = p320r1.ToEllipticCurve()
+	case p384r1.params.B:
+		curve = p384r1.ToEllipticCurve()
+	case p512r1.params.B:
+		curve = p512r1.ToEllipticCurve()
+	default:
+		return nil, nil
+	}
+
+	pubKeyData := publicKeyInfo.SubjectPublicKey.Bytes[1:]
+
+	x := pubKeyData[0 : len(pubKeyData)/2]
+	y := pubKeyData[len(pubKeyData)/2:]
+
+	return &ecdsa.PublicKey{
+		Curve: curve,
+		X:     new(big.Int).SetBytes(x),
+		Y:     new(big.Int).SetBytes(y),
+	}, nil
 }
 
+// PublicKeyInfo represents the ASN.1 structure of a public key.
 type publicKeyInfo struct {
 	Algorithm        algorithmIdentifier
 	SubjectPublicKey asn1.BitString
+}
+
+type algorithmIdentifier struct {
+	Algorithm  asn1.ObjectIdentifier
+	Parameters ecParameters
 }
 
 type ecParameters struct {
@@ -310,6 +362,6 @@ type fieldID struct {
 
 type curve struct {
 	Placeholder asn1.RawContent
-	X           asn1.RawContent
-	Y           asn1.RawContent
+	A           asn1.RawContent
+	B           asn1.RawContent
 }
