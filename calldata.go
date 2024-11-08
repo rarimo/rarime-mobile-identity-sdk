@@ -3,7 +3,6 @@ package identity
 import (
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strings"
@@ -496,9 +495,6 @@ func retriveCertificateRegistrationDispatcherForECDSAFamily(
 		default:
 			return nil, fmt.Errorf("unsupported certificate signature algorithm: %v", slaveCert.SignatureAlgorithm.String())
 		}
-
-		fmt.Println(dispatcherName)
-		fmt.Println(hex.EncodeToString(keccak256.Hash([]byte(dispatcherName))))
 
 		return keccak256.Hash([]byte(dispatcherName)), nil
 	default:
