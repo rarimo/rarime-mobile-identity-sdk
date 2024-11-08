@@ -171,6 +171,7 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 	return json, nil
 }
 
+// BuildQueryIdentityInputs builds the inputs for the queryIdentity circuit
 func (p *Profile) BuildQueryIdentityInputs(
 	dg1 []byte,
 	smtProofJSON []byte,

@@ -3,7 +3,6 @@ package identity
 import (
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strings"
@@ -118,7 +117,7 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 		return nil, fmt.Errorf("failed to retrive registration passport data: %v", err)
 	}
 
-	zkProof, proofPoints, err := PrepareZKProofForEVMVerification(proofJSON)
+	zkProof, proofPoints, err := prepareZKProofForEVMVerification(proofJSON)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare zk proof for evm verification: %v", err)
 	}
@@ -324,7 +323,7 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 		return registrationPassportData, nil
 	}
 
-	aaPubKey, err := parsePemToPubKey(aaPubKeyPem)
+	aaPubKey, err := ParsePemToPubKey(aaPubKeyPem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse pem to pubkey: %v", err)
 	}
@@ -348,13 +347,20 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 
 		return registrationPassportData, nil
 	case *ecdsa.PublicKey:
-		registrationPassportData.AAPublicKey = append(pub.X.Bytes(), pub.Y.Bytes()...)
+		pubKeyX := make([]byte, pub.Params().BitSize/8)
+		pubKeyY := make([]byte, pub.Params().BitSize/8)
+
+		copy(pubKeyX[len(pubKeyX)-len(pub.X.Bytes()):], pub.X.Bytes())
+		copy(pubKeyY[len(pubKeyY)-len(pub.Y.Bytes()):], pub.Y.Bytes())
+
+		registrationPassportData.AAPublicKey = append(pubKeyX, pubKeyY...)
+
 		registrationPassportData.AASignature, err = NormalizeSignatureWithCurve(aaSignature, pub.Curve)
 		if err != nil {
 			return nil, fmt.Errorf("failed to normalize signature with curve: %v", err)
 		}
 
-		dispatcherName := fmt.Sprintf("P_ECDSA_SHA_%v", ecSizeInBits)
+		dispatcherName := fmt.Sprintf("P_ECDSA_SHA1_%v", ecSizeInBits)
 		registrationPassportData.AADataType = keccak256.Hash([]byte(dispatcherName))
 
 		return registrationPassportData, nil
@@ -489,9 +495,6 @@ func retriveCertificateRegistrationDispatcherForECDSAFamily(
 		default:
 			return nil, fmt.Errorf("unsupported certificate signature algorithm: %v", slaveCert.SignatureAlgorithm.String())
 		}
-
-		fmt.Println(dispatcherName)
-		fmt.Println(hex.EncodeToString(keccak256.Hash([]byte(dispatcherName))))
 
 		return keccak256.Hash([]byte(dispatcherName)), nil
 	default:

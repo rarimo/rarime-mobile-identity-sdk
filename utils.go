@@ -2,12 +2,10 @@ package identity
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/asn1"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -22,6 +20,7 @@ import (
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
 	"github.com/rarimo/ldif-sdk/ldif"
+	"github.com/rarimo/rarime-mobile-identity-sdk/brainpool"
 	"golang.org/x/crypto/cryptobyte"
 )
 
@@ -31,9 +30,9 @@ const lowSMaxHex = "54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb7
 const nHex = "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7"
 
 // SignPubSignalsWithSecp256k1 signs a public signals using a private key string (hex format) and the secp256k1 curve.
-func SignPubSignalsWithSecp256k1(privateKey string, pubSignalsJson []byte) (string, error) {
+func SignPubSignalsWithSecp256k1(privateKey string, pubSignalsJSON []byte) (string, error) {
 	var pubSignals []string
-	if err := json.Unmarshal(pubSignalsJson, &pubSignals); err != nil {
+	if err := json.Unmarshal(pubSignalsJSON, &pubSignals); err != nil {
 		return "", fmt.Errorf("error decoding  pub  signals: %v", err)
 	}
 
@@ -180,50 +179,20 @@ func SmartChunking2(bits []int64, blockNumber uint64) []int64 {
 	return result
 }
 
-// pubKeyPemToRaw extracts the modulus from a RSA public key PEM.
-func pubKeyPemToRaw(pubKeyPem []byte) ([]byte, bool, error) {
-	block, _ := pem.Decode(pubKeyPem)
-	if block == nil {
-		return nil, false, fmt.Errorf("error decoding public key pem")
-	}
-
-	var info publicKeyInfo
-	_, err := asn1.Unmarshal(block.Bytes, &info)
-	if err == nil {
-		if info.Algorithm.Algorithm.String() == brainpoolP256CurveOID {
-			var raw []byte
-			raw = append(raw, info.SubjectPublicKey.Bytes[1:]...)
-
-			return raw, true, nil
-		}
-	}
-
-	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return nil, false, fmt.Errorf("error parsing public key: %v", err)
-	}
-
-	var isEcdsa bool
-	var raw []byte
-	switch pub := pubKey.(type) {
-	case *rsa.PublicKey:
-		isEcdsa = false
-		raw = pub.N.Bytes()
-	case *ecdsa.PublicKey:
-		isEcdsa = true
-		raw = pub.X.Bytes()
-		raw = append(raw, pub.Y.Bytes()...)
-	default:
-		return nil, false, fmt.Errorf("unsupported public key type: %T", pub)
-	}
-
-	return raw, isEcdsa, nil
-}
-
-func parsePemToPubKey(pubKeyPem []byte) (interface{}, error) {
+// ParsePemToPubKey parses a public key PEM to a public key.
+func ParsePemToPubKey(pubKeyPem []byte) (interface{}, error) {
 	block, _ := pem.Decode(pubKeyPem)
 	if block == nil {
 		return nil, fmt.Errorf("error decoding public key pem")
+	}
+
+	brainpoolPubKey, err := brainpool.GetPublicKeyFromPem(block)
+	if err != nil {
+		return nil, fmt.Errorf("error getting brainpool public key: %v", err)
+	}
+
+	if brainpoolPubKey != nil {
+		return brainpoolPubKey, nil
 	}
 
 	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
@@ -456,8 +425,7 @@ func RSAPublicDecrypt(pub *rsa.PublicKey, sig []byte) ([]byte, error) {
 	return m.Bytes(), nil
 }
 
-// PrepareZKProofForEVMVerification prepares a ZK proof for EVM verification.
-func PrepareZKProofForEVMVerification(proofJSON []byte) (*ZkProof, *VerifierHelperProofPoints, error) {
+func prepareZKProofForEVMVerification(proofJSON []byte) (*ZkProof, *VerifierHelperProofPoints, error) {
 	zkProof := new(ZkProof)
 	if err := json.Unmarshal(proofJSON, zkProof); err != nil {
 		return nil, nil, err
@@ -505,31 +473,4 @@ func PrepareZKProofForEVMVerification(proofJSON []byte) (*ZkProof, *VerifierHelp
 	}
 
 	return zkProof, proofPoints, nil
-}
-
-type algorithmIdentifier struct {
-	Algorithm  asn1.ObjectIdentifier
-	Parameters ecParameters
-}
-
-type publicKeyInfo struct {
-	Algorithm        algorithmIdentifier
-	SubjectPublicKey asn1.BitString
-}
-
-type ecParameters struct {
-	Version *big.Int
-	FieldID fieldID
-	Curve   curve
-}
-
-type fieldID struct {
-	FieldType asn1.ObjectIdentifier
-	Data      *big.Int
-}
-
-type curve struct {
-	Placeholder asn1.RawContent
-	X           asn1.RawContent
-	Y           asn1.RawContent
 }
