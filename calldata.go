@@ -14,23 +14,8 @@ import (
 	"github.com/rarimo/ldif-sdk/mt"
 )
 
-// PNoAaHex represents the register data type.
-const PNoAaHex = "9a0f175c44aa7c405c6ab99fbc9aa9e2cdc8971d1fea806282f7746205e8b807"
-
-// PRsaSha12688Hex represents the register data type.
-const PRsaSha12688Hex = "42ec2321c321a7ac25cb817a4e29d805e64817ab3a18b50127e0ccae327a111b"
-
-// PEcdsaSha12704Hex represents the register data type.
-const PEcdsaSha12704Hex = "b8abd3b1d40edd7da5ec75a9204661d45e63c046b5a19626a760482ca842fa1d"
-
-// PRsaSha126883Hex represents the register data type.
-const PRsaSha126883Hex = "8dc1b8b03716166cd99f5b390f2c6924085b150659e0cb3ca421ab47a1e65e09"
-
 // ZKTypePrefix represerts the circuit zk type prefix
 const ZKTypePrefix = "Z_PER_PASSPORT"
-
-// RSAEXPONENT3 represents the RSA exponent 3.
-const RSAEXPONENT3 = 3
 
 // RegistrationMetaData contains all metadata for the Registration contract.
 var RegistrationMetaData = &bind.MetaData{
@@ -339,7 +324,7 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 		}
 
 		dispatcherName := fmt.Sprintf("P_RSA_%v_%v", aaSignatureHashAlgo, ecSizeInBits)
-		if pub.E == RSAEXPONENT3 {
+		if pub.E == 3 {
 			dispatcherName += "_3"
 		}
 
