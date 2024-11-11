@@ -25,7 +25,6 @@ import (
 )
 
 const smartChunking2BlockSize uint64 = 512
-const brainpoolP256CurveOID = "1.2.840.10045.2.1"
 const lowSMaxHex = "54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb"
 const nHex = "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7"
 
