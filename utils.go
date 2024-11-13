@@ -185,11 +185,7 @@ func ParsePemToPubKey(pubKeyPem []byte) (interface{}, error) {
 		return nil, fmt.Errorf("error decoding public key pem")
 	}
 
-	brainpoolPubKey, err := brainpool.GetPublicKeyFromPem(block)
-	if err != nil {
-		return nil, fmt.Errorf("error getting brainpool public key: %v", err)
-	}
-
+	brainpoolPubKey, _ := brainpool.GetPublicKeyFromPem(block)
 	if brainpoolPubKey != nil {
 		return brainpoolPubKey, nil
 	}
