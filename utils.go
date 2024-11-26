@@ -466,3 +466,18 @@ func GetCurveNameFromECDSAPublicKeyPEM(pubKeyPem []byte) (string, error) {
 		return "", fmt.Errorf("unsupported public key type: %T", pub)
 	}
 }
+
+// IsBrainpoolPublicKey checks if a public key is a Brainpool public key.
+func IsBrainpoolPublicKey(pubKeyPem []byte) bool {
+	publicKey, err := ParsePemToPubKey(pubKeyPem)
+	if err != nil {
+		return false
+	}
+
+	switch pub := publicKey.(type) {
+	case *ecdsa.PublicKey:
+		return brainpool.IsBrainpool(pub)
+	default:
+		return false
+	}
+}

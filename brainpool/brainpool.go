@@ -336,6 +336,16 @@ func GetPublicKeyFromPem(pem *pem.Block) (*ecdsa.PublicKey, error) {
 	}, nil
 }
 
+// IsBrainpool returns true if public key is a brainpool curve.
+func IsBrainpool(pub *ecdsa.PublicKey) bool {
+	switch pub.Curve {
+	case P160t1(), P192t1(), P224t1(), P256t1(), P320t1(), P384t1(), P512t1():
+		return true
+	default:
+		return false
+	}
+}
+
 // PublicKeyInfo represents the ASN.1 structure of a public key.
 type publicKeyInfo struct {
 	Algorithm        algorithmIdentifier
