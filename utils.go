@@ -2,6 +2,7 @@ package identity
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -196,25 +197,6 @@ func ParsePemToPubKey(pubKeyPem []byte) (interface{}, error) {
 	}
 
 	return pubKey, nil
-}
-
-func pemToRsaPubKey(pubKeyPem []byte) (*rsa.PublicKey, error) {
-	block, _ := pem.Decode(pubKeyPem)
-	if block == nil {
-		return nil, fmt.Errorf("error decoding public key pem")
-	}
-
-	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing public key: %v", err)
-	}
-
-	rsaPubKey, ok := pubKey.(*rsa.PublicKey)
-	if !ok {
-		return nil, fmt.Errorf("error converting public key to RSA public key")
-	}
-
-	return rsaPubKey, nil
 }
 
 // CalculateProofIndex calculates the proof index.
@@ -468,4 +450,19 @@ func prepareZKProofForEVMVerification(proofJSON []byte) (*ZkProof, *VerifierHelp
 	}
 
 	return zkProof, proofPoints, nil
+}
+
+// GetCurveNameFromECDSAPublicKeyPEM gets the curve name from an ECDSA public key PEM.
+func GetCurveNameFromECDSAPublicKeyPEM(pubKeyPem []byte) (string, error) {
+	publicKey, err := ParsePemToPubKey(pubKeyPem)
+	if err != nil {
+		return "", fmt.Errorf("error parsing public key: %v", err)
+	}
+
+	switch pub := publicKey.(type) {
+	case *ecdsa.PublicKey:
+		return pub.Curve.Params().Name, nil
+	default:
+		return "", fmt.Errorf("unsupported public key type: %T", pub)
+	}
 }
