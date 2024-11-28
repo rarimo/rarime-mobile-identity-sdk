@@ -465,6 +465,16 @@ func retriveCertificateRegistrationDispatcherForECDSAFamily(
 			curveName = "SECP384R1"
 		case "P-521":
 			curveName = "SECP521R1"
+		case "brainpoolP224r1":
+			curveName = "BRAINPOOLP224R1"
+		case "brainpoolP256r1":
+			curveName = "BRAINPOOLP256R1"
+		case "brainpoolP384r1":
+			curveName = "BRAINPOOLP384R1"
+		case "brainpoolP512r1":
+			curveName = "BRAINPOOLP512R1"
+		default:
+			return nil, fmt.Errorf("unsupported curve: %v", pub.Curve.Params().Name)
 		}
 
 		var dispatcherName string
