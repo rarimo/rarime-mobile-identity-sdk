@@ -319,7 +319,6 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 	switch pub := aaPubKey.(type) {
 	case *rsa.PublicKey:
 		registrationPassportData.AAPublicKey = pub.N.Bytes()
-		registrationPassportData.AASignature = aaSignature
 
 		aaSignatureHashAlgo, err := figureOutRSAAAHashAlgorithm(pub, aaSignature)
 		if err != nil {
@@ -341,6 +340,7 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 			dispatcherName += "_3"
 		}
 
+		registrationPassportData.AASignature = aaSignature
 		registrationPassportData.AADataType = keccak256.Hash([]byte(dispatcherName))
 
 		return registrationPassportData, nil
