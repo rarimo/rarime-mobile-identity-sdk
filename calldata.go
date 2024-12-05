@@ -14,6 +14,9 @@ import (
 	"github.com/rarimo/ldif-sdk/mt"
 )
 
+// ECMaxSizeInBits represents the maximum size in bits for an encapsulated content
+const ECMaxSizeInBits = 2688
+
 // ZKTypePrefix represerts the circuit zk type prefix
 const ZKTypePrefix = "Z_PER_PASSPORT"
 
@@ -324,9 +327,13 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 		}
 
 		if aaSignatureHashAlgo == "" {
-			return &RegistrationPassportData{
-				AADataType: keccak256.Hash([]byte("P_NO_AA")),
-			}, nil
+			registrationPassportData.AADataType = keccak256.Hash([]byte("P_NO_AA"))
+
+			return registrationPassportData, nil
+		}
+
+		if ECMaxSizeInBits > ecSizeInBits {
+			ecSizeInBits = ECMaxSizeInBits
 		}
 
 		dispatcherName := fmt.Sprintf("P_RSA_%v_%v", aaSignatureHashAlgo, ecSizeInBits)
