@@ -323,6 +323,12 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 			return nil, fmt.Errorf("failed to figure out rsa aa hash algorithm: %v", err)
 		}
 
+		if aaSignatureHashAlgo == "" {
+			return &RegistrationPassportData{
+				AADataType: keccak256.Hash([]byte("P_NO_AA")),
+			}, nil
+		}
+
 		dispatcherName := fmt.Sprintf("P_RSA_%v_%v", aaSignatureHashAlgo, ecSizeInBits)
 		if pub.E == 3 {
 			dispatcherName += "_3"
@@ -357,7 +363,7 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 func figureOutRSAAAHashAlgorithm(aaPubKey *rsa.PublicKey, aaSignature []byte) (string, error) {
 	decyptedAASig, err := RSAPublicDecrypt(aaPubKey, aaSignature)
 	if err != nil {
-		return "", fmt.Errorf("failed to decrypt aa signature: %v", err)
+		return "", nil
 	}
 
 	if len(decyptedAASig) < 2 {
@@ -382,7 +388,7 @@ func figureOutRSAAAHashAlgorithm(aaPubKey *rsa.PublicKey, aaSignature []byte) (s
 	case 0x38:
 		return "SHA224", nil
 	default:
-		return "", fmt.Errorf("unsupported flag bit: %v", flagBit)
+		return "SHA256", nil
 	}
 }
 

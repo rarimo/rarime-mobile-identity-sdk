@@ -20,7 +20,7 @@ func TestBuildRegisterCalldata(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signatureHex := "2fb614007c94084d8fe609a448116eb29ebf04fc3c19cdc326e611ab1c65b0e169a952133c5f1e3e71a83206cce4341dcc51634abc59d438c6dd5e6e9bf0eaf3da4c84cc835b393242b433e9ec5d17593df3145bf7f590bc96a82c06a04dc18781186efc1d64d45bed33b298f7ff4115446804568fe7e9ca5d513cb346ab9ec8"
+	signatureHex := "96277aebb727fb5a15755b0f2bd41febeb0dec810a7ba1fc002c3326d57696caa07804bbc0bb54cdc4fa4d0baeee14b2ba99a0ff0e5a35839551cb3fb15ab241e8229124868d1cb8c13d02b27005c4d3eac24d994b75bd54c6b61174d0687d7549f553c24832755802a95a7c92ae842c04bf634d98df4827ed085d773c0465bab92d27a211c41ee5eadd8cd78fa17c49ad7d9827844b185873f7968330b015ce"
 	signature, err := hex.DecodeString(signatureHex)
 	if err != nil {
 		t.Fatal(err)
@@ -28,7 +28,9 @@ func TestBuildRegisterCalldata(t *testing.T) {
 
 	builder := &identity.CallDataBuilder{}
 
-	calldata, err := builder.BuildRegisterCalldata(proofJson, signature, pubKeyPem, 2668, []byte{}, false, "placeholder")
+	masterRoot, _ := hex.DecodeString("242f36929b6d99785dec1a9ba087033a5d09e8ed58835f710fe689956e30a801")
+
+	calldata, err := builder.BuildRegisterCalldata(proofJson, signature, pubKeyPem, 1440, masterRoot, false, "registerIdentity_11_256_3_3_576_248_1_1184_5_264")
 	if err != nil {
 		t.Fatal(err)
 	}
