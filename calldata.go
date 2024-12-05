@@ -100,14 +100,14 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 	isRevoked bool,
 	circuitName string,
 ) ([]byte, error) {
-	registrationPassportData, err := retriveRegistrationPassportData(aaSignature, aaPubKeyPem, ecSizeInBits)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrive registration passport data: %v", err)
-	}
-
 	zkProof, proofPoints, err := prepareZKProofForEVMVerification(proofJSON)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare zk proof for evm verification: %v", err)
+	}
+
+	passportKey, ok := new(big.Int).SetString(zkProof.PubSignals[0], 10)
+	if !ok {
+		return nil, fmt.Errorf("error setting passportKey: %v", zkProof.PubSignals[0])
 	}
 
 	passportHash, ok := new(big.Int).SetString(zkProof.PubSignals[1], 10)
@@ -123,6 +123,16 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 	pkIdentityHash, ok := new(big.Int).SetString(zkProof.PubSignals[3], 10)
 	if !ok {
 		return nil, fmt.Errorf("error setting pkIdentityHash: %v", zkProof.PubSignals[3])
+	}
+
+	registrationPassportData, err := retriveRegistrationPassportData(
+		aaSignature,
+		aaPubKeyPem,
+		ecSizeInBits,
+		passportKey.Bytes(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrive registration passport data: %v", err)
 	}
 
 	datatype := [32]byte{}
@@ -277,7 +287,12 @@ func (s *CallDataBuilder) BuildRevoceCalldata(
 	aaPubKeyPem []byte,
 	ecSizeInBits int,
 ) ([]byte, error) {
-	registrationPassportData, err := retriveRegistrationPassportData(aaSignature, aaPubKeyPem, ecSizeInBits)
+	registrationPassportData, err := retriveRegistrationPassportData(
+		aaSignature,
+		aaPubKeyPem,
+		ecSizeInBits,
+		[]byte{},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrive registration passport data: %v", err)
 	}
@@ -301,7 +316,12 @@ func (s *CallDataBuilder) BuildRevoceCalldata(
 	return abi.Pack("revoke", identityKeyInt, passport)
 }
 
-func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecSizeInBits int) (*RegistrationPassportData, error) {
+func retriveRegistrationPassportData(
+	aaSignature []byte,
+	aaPubKeyPem []byte,
+	ecSizeInBits int,
+	passportKey []byte,
+) (*RegistrationPassportData, error) {
 	registrationPassportData := &RegistrationPassportData{}
 	if len(aaPubKeyPem) == 0 {
 		registrationPassportData.AADataType = keccak256.Hash([]byte("P_NO_AA"))
@@ -318,8 +338,6 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 
 	switch pub := aaPubKey.(type) {
 	case *rsa.PublicKey:
-		registrationPassportData.AAPublicKey = pub.N.Bytes()
-
 		aaSignatureHashAlgo, err := figureOutRSAAAHashAlgorithm(pub, aaSignature)
 		if err != nil {
 			return nil, fmt.Errorf("failed to figure out rsa aa hash algorithm: %v", err)
@@ -327,6 +345,7 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 
 		if aaSignatureHashAlgo == "" {
 			registrationPassportData.AADataType = keccak256.Hash([]byte("P_NO_AA"))
+			registrationPassportData.AAPublicKey = passportKey
 
 			return registrationPassportData, nil
 		}
@@ -340,6 +359,7 @@ func retriveRegistrationPassportData(aaSignature []byte, aaPubKeyPem []byte, ecS
 			dispatcherName += "_3"
 		}
 
+		registrationPassportData.AAPublicKey = pub.N.Bytes()
 		registrationPassportData.AASignature = aaSignature
 		registrationPassportData.AADataType = keccak256.Hash([]byte(dispatcherName))
 
