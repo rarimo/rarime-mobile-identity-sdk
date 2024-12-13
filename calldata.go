@@ -309,10 +309,8 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem
 // RegisterSimple(identityKey_ *big.Int, passport_ RegistrationSimplePassport, signature_ []byte, zkPoints_ VerifierHelperProofPoints)
 func (s *CallDataBuilder) BuildRegisterSimpleCalldata(
 	registerIdentityLightProofJSON []byte,
-	dgCommit []byte,
 	signature []byte,
 	passportHash []byte,
-	dg1Hash []byte,
 	publicKey []byte,
 	verifierAddress string,
 ) ([]byte, error) {
@@ -321,13 +319,23 @@ func (s *CallDataBuilder) BuildRegisterSimpleCalldata(
 		return nil, fmt.Errorf("failed to prepare zk proof for evm verification: %v", err)
 	}
 
+	dg1Hash, ok := new(big.Int).SetString(zkProof.PubSignals[0], 10)
+	if !ok {
+		return nil, fmt.Errorf("error setting dg1Hash: %v", zkProof.PubSignals[0])
+	}
+
+	dg1Commit, ok := new(big.Int).SetString(zkProof.PubSignals[1], 10)
+	if !ok {
+		return nil, fmt.Errorf("error setting dg1Commit: %v", zkProof.PubSignals[1])
+	}
+
 	identityKey, ok := new(big.Int).SetString(zkProof.PubSignals[2], 10)
 	if !ok {
 		return nil, fmt.Errorf("error setting identityKey: %v", zkProof.PubSignals[2])
 	}
 
 	var dg1HashBuf [32]byte
-	copy(dg1HashBuf[:], dg1Hash)
+	dg1Hash.FillBytes(dg1HashBuf[:])
 
 	var publicKeyBuf [32]byte
 	copy(publicKeyBuf[:], publicKey)
@@ -336,7 +344,7 @@ func (s *CallDataBuilder) BuildRegisterSimpleCalldata(
 	copy(passportHashBuf[:], passportHash)
 
 	passport := &RegistrationSimplePassport{
-		DgCommit:     new(big.Int).SetBytes(dgCommit),
+		DgCommit:     dg1Commit,
 		Dg1Hash:      dg1HashBuf,
 		PublicKey:    publicKeyBuf,
 		PassportHash: passportHashBuf,
