@@ -351,7 +351,7 @@ func (s *CallDataBuilder) BuildRegisterSimpleCalldata(
 		Verifier:     common.HexToAddress(verifierAddress),
 	}
 
-	abi, err := newRegistrationCoder()
+	abi, err := newRegistrationSimpleCoder()
 	if err != nil {
 		return nil, err
 	}
