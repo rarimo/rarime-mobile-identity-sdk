@@ -229,19 +229,23 @@ func BigIntToBytes(x string) ([]byte, error) {
 	return bigInt.Bytes(), nil
 }
 
-// Hash512 applies poseidon2 to [32, 32] bytes long integers mod 2 ** 248
+// Hash512 applies poseidon2 to [32,32] (or [32,32,32,32]) byte long integers mod 2**248.
 func Hash512(key []byte) (*big.Int, error) {
-	if len(key) != 64 {
-		return nil, fmt.Errorf("key is not 64 bytes long")
+	if len(key) != 64 && len(key) != 128 {
+		return nil, fmt.Errorf("key length must be either 64 or 128 bytes, got %d", len(key))
 	}
 
-	var decomposed [2]*big.Int
-	for i := 0; i < 2; i++ {
-		element := new(big.Int).SetBytes(key[i*32 : (i+1)*32])
-		decomposed[i] = new(big.Int).Mod(element, new(big.Int).Exp(big.NewInt(2), big.NewInt(248), nil))
+	modulus := new(big.Int).Exp(big.NewInt(2), big.NewInt(248), nil)
+	numElements := len(key) / 32
+
+	decomposed := make([]*big.Int, numElements)
+	for i := 0; i < numElements; i++ {
+		block := key[i*32 : (i+1)*32]
+		element := new(big.Int).SetBytes(block)
+		decomposed[i] = new(big.Int).Mod(element, modulus)
 	}
 
-	keyHash, err := poseidon.Hash(decomposed[:])
+	keyHash, err := poseidon.Hash(decomposed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute Poseidon hash: %v", err)
 	}
