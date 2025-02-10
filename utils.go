@@ -229,23 +229,48 @@ func BigIntToBytes(x string) ([]byte, error) {
 	return bigInt.Bytes(), nil
 }
 
-// Hash512 applies poseidon2 to [32,32] (or [32,32,32,32]) byte long integers mod 2**248.
-func Hash512(key []byte) (*big.Int, error) {
-	if len(key) != 64 && len(key) != 128 {
-		return nil, fmt.Errorf("key length must be either 64 or 128 bytes, got %d", len(key))
+func Hash512P512(key []byte) (*big.Int, error) {
+	if len(key) != 128 {
+		return nil, fmt.Errorf("key is not 128 bytes long, got %d", len(key))
 	}
 
 	modulus := new(big.Int).Exp(big.NewInt(2), big.NewInt(248), nil)
-	numElements := len(key) / 32
 
-	decomposed := make([]*big.Int, numElements)
-	for i := 0; i < numElements; i++ {
-		block := key[i*32 : (i+1)*32]
-		element := new(big.Int).SetBytes(block)
-		decomposed[i] = new(big.Int).Mod(element, modulus)
+	X := new(big.Int).SetBytes(key[0:64])
+	Y := new(big.Int).SetBytes(key[64:128])
+
+	lowerX := new(big.Int).Mod(X, modulus)
+
+	upperX := new(big.Int).Rsh(X, 256)
+	upperX.Mod(upperX, modulus)
+
+	lowerY := new(big.Int).Mod(Y, modulus)
+	upperY := new(big.Int).Rsh(Y, 256)
+	upperY.Mod(upperY, modulus)
+
+	decomposed := []*big.Int{lowerX, upperX, lowerY, upperY}
+
+	keyHash, err := poseidon.Hash(decomposed[:])
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute Poseidon hash: %v", err)
 	}
 
-	keyHash, err := poseidon.Hash(decomposed)
+	return keyHash, nil
+}
+
+// Hash512 applies poseidon2 to [32, 32] bytes long integers mod 2 ** 248
+func Hash512(key []byte) (*big.Int, error) {
+	if len(key) != 64 {
+		return nil, fmt.Errorf("key is not 64 bytes long")
+	}
+
+	var decomposed [2]*big.Int
+	for i := 0; i < 2; i++ {
+		element := new(big.Int).SetBytes(key[i*32 : (i+1)*32])
+		decomposed[i] = new(big.Int).Mod(element, new(big.Int).Exp(big.NewInt(2), big.NewInt(248), nil))
+	}
+
+	keyHash, err := poseidon.Hash(decomposed[:])
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute Poseidon hash: %v", err)
 	}

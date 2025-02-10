@@ -150,15 +150,6 @@ func (x *X509Util) FindExpirationPositionInSignedAttributes(cert *x509.Certifica
 	return new(big.Int).SetInt64(int64(index)), nil
 }
 
-func padTo32Bytes(b []byte) []byte {
-	if len(b) >= 32 {
-		return b
-	}
-	padded := make([]byte, 32)
-	copy(padded[32-len(b):], b)
-	return padded
-}
-
 // GetSlaveCertificateIndex returns the index of the master certificate of the slave certificate
 func (x *X509Util) GetSlaveCertificateIndex(slavePem []byte, mastersPem []byte) ([]byte, error) {
 	slaveCert, _, err := x.GetMaster(slavePem, mastersPem)
@@ -176,14 +167,21 @@ func (x *X509Util) GetSlaveCertificateIndex(slavePem []byte, mastersPem []byte) 
 			return nil, fmt.Errorf("failed to hash key: %v", err)
 		}
 	case *ecdsa.PublicKey:
-		xBytes := padTo32Bytes(pub.X.Bytes())
-		yBytes := padTo32Bytes(pub.Y.Bytes())
-		pubKeyRaw := append(xBytes, yBytes...)
+		pubKeyRaw := pub.X.Bytes()
+		pubKeyRaw = append(pubKeyRaw, pub.Y.Bytes()...)
 
-		masterCertificateIndex, err = Hash512(pubKeyRaw)
-		if err != nil {
-			return nil, fmt.Errorf("failed to hash key: %v", err)
+		if pub.Params().BitSize == 512 {
+			masterCertificateIndex, err = Hash512P512(pubKeyRaw)
+			if err != nil {
+				return nil, fmt.Errorf("failed to hash key: %v", err)
+			}
+		} else {
+			masterCertificateIndex, err = Hash512(pubKeyRaw)
+			if err != nil {
+				return nil, fmt.Errorf("failed to hash key: %v", err)
+			}
 		}
+
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}
