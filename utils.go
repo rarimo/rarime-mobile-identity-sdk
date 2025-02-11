@@ -229,6 +229,35 @@ func BigIntToBytes(x string) ([]byte, error) {
 	return bigInt.Bytes(), nil
 }
 
+func Hash512P512(key []byte) (*big.Int, error) {
+	if len(key) != 128 {
+		return nil, fmt.Errorf("key is not 128 bytes long, got %d", len(key))
+	}
+
+	modulus := new(big.Int).Exp(big.NewInt(2), big.NewInt(248), nil)
+
+	X := new(big.Int).SetBytes(key[0:64])
+	Y := new(big.Int).SetBytes(key[64:128])
+
+	lowerX := new(big.Int).Mod(X, modulus)
+
+	upperX := new(big.Int).Rsh(X, 256)
+	upperX.Mod(upperX, modulus)
+
+	lowerY := new(big.Int).Mod(Y, modulus)
+	upperY := new(big.Int).Rsh(Y, 256)
+	upperY.Mod(upperY, modulus)
+
+	decomposed := []*big.Int{lowerX, upperX, lowerY, upperY}
+
+	keyHash, err := poseidon.Hash(decomposed[:])
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute Poseidon hash: %v", err)
+	}
+
+	return keyHash, nil
+}
+
 // Hash512 applies poseidon2 to [32, 32] bytes long integers mod 2 ** 248
 func Hash512(key []byte) (*big.Int, error) {
 	if len(key) != 64 {

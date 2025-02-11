@@ -170,10 +170,18 @@ func (x *X509Util) GetSlaveCertificateIndex(slavePem []byte, mastersPem []byte) 
 		pubKeyRaw := pub.X.Bytes()
 		pubKeyRaw = append(pubKeyRaw, pub.Y.Bytes()...)
 
-		masterCertificateIndex, err = Hash512(pubKeyRaw)
-		if err != nil {
-			return nil, fmt.Errorf("failed to hash key: %v", err)
+		if pub.Params().BitSize == 512 {
+			masterCertificateIndex, err = Hash512P512(pubKeyRaw)
+			if err != nil {
+				return nil, fmt.Errorf("failed to hash key: %v", err)
+			}
+		} else {
+			masterCertificateIndex, err = Hash512(pubKeyRaw)
+			if err != nil {
+				return nil, fmt.Errorf("failed to hash key: %v", err)
+			}
 		}
+
 	default:
 		return nil, fmt.Errorf("unsupported public key type: %T", pub)
 	}

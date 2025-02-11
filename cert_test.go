@@ -61,3 +61,19 @@ func TestCert(t *testing.T) {
 
 	t.Logf("master certificate index: %v", hex.EncodeToString(masterCertificateIndex))
 }
+
+func TestCertBrail(t *testing.T) {
+	slavePem := []byte("-----BEGIN CERTIFICATE-----\nxxx\n-----END CERTIFICATE-----\n")
+	mastersPem := []byte("-----BEGIN CERTIFICATE-----\nxxx\n-----END CERTIFICATE-----\n")
+
+	x508Util := identity.X509Util{}
+
+	masterCertificateIndex, err := x508Util.GetSlaveCertificateIndex(slavePem, mastersPem)
+	if err != nil {
+		t.Errorf("failed to get master certificate index: %v", err)
+	}
+
+	t.Log("master certificate index len : ", len(masterCertificateIndex))
+
+	t.Logf("master certificate index: %v", hex.EncodeToString(masterCertificateIndex))
+}
