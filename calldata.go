@@ -93,6 +93,12 @@ type ZkProof struct {
 	PubSignals PubSignals `json:"pub_signals"`
 }
 
+// RegisterCalldataResult represents the result of the register calldata.
+type RegisterCalldataResult struct {
+	Calldata       []byte
+	DispatcherName string
+}
+
 func newRegistrationCoder() (*abi.ABI, error) {
 	parsed, err := RegistrationMetaData.GetAbi()
 	if err != nil {
@@ -204,7 +210,7 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 }
 
 // BuildRegisterCertificateCalldata builds the calldata for the register certificate function.
-func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem []byte, slavePem []byte) ([]byte, error) {
+func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem []byte, slavePem []byte) (*RegisterCalldataResult, error) {
 	icaoTree, err := mt.BuildTreeFromCollection(masterCertificatesPem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build tree from collection: %v", err)
@@ -269,7 +275,7 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem
 		return nil, fmt.Errorf("failed to find expiration position in signed attributes: %v", err)
 	}
 
-	dispatcher, err := retriveCertificateRegistrationDispatcher(masterCert, slaveCert)
+	dispatcher, dispatcherName, err := retriveCertificateRegistrationDispatcher(masterCert, slaveCert)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve certificate registration dispatcher and slave key: %v", err)
 	}
@@ -301,7 +307,15 @@ func (s *CallDataBuilder) BuildRegisterCertificateCalldata(masterCertificatesPem
 		PublicKey: icaoMemberKey,
 	}
 
-	return abi.Pack("registerCertificate", registrationCertificate, icaoMember, icaoMerkleProofSiblings)
+	calldata, err := abi.Pack("registerCertificate", registrationCertificate, icaoMember, icaoMerkleProofSiblings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to pack register certificate: %v", err)
+	}
+
+	return &RegisterCalldataResult{
+		Calldata:       calldata,
+		DispatcherName: dispatcherName,
+	}, nil
 }
 
 // BuildRegisterSimpleCalldata builds the calldata for the registerSimple function.
@@ -501,27 +515,27 @@ func figureOutRSAAAHashAlgorithm(aaPubKey *rsa.PublicKey, aaSignature []byte) (s
 func retriveCertificateRegistrationDispatcher(
 	masterCert *x509.Certificate,
 	slaveCert *x509.Certificate,
-) ([]byte, error) {
+) ([]byte, string, error) {
 	switch pub := masterCert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		return retriveCertificateRegistrationDispatcherForRSAFamily(masterCert, slaveCert)
 	case *ecdsa.PublicKey:
 		return retriveCertificateRegistrationDispatcherForECDSAFamily(masterCert, slaveCert)
 	default:
-		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+		return nil, "", fmt.Errorf("unsupported public key type: %T", pub)
 	}
 }
 
 func retriveCertificateRegistrationDispatcherForRSAFamily(
 	masterCert *x509.Certificate,
 	slaveCert *x509.Certificate,
-) ([]byte, error) {
+) ([]byte, string, error) {
 	var slavePubKeySizeInBits string
 	switch pub := slaveCert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		slavePubKeySizeInBits = fmt.Sprintf("%v", len(pub.N.Bytes())*8)
 	default:
-		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+		return nil, "", fmt.Errorf("unsupported public key type: %T", pub)
 	}
 
 	switch pub := masterCert.PublicKey.(type) {
@@ -543,32 +557,36 @@ func retriveCertificateRegistrationDispatcherForRSAFamily(
 		case x509.SHA512WithRSAPSS:
 			dispatcherName = "C_RSAPSS_SHA512_" + slavePubKeySizeInBits
 		default:
-			return nil, fmt.Errorf("unsupported certificate signature algorithm: %v", slaveCert.SignatureAlgorithm.String())
+			return nil, "", fmt.Errorf("unsupported certificate signature algorithm: %v", slaveCert.SignatureAlgorithm.String())
 		}
 
-		return keccak256.Hash([]byte(dispatcherName)), nil
+		return keccak256.Hash([]byte(dispatcherName)), dispatcherName, nil
 	default:
-		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+		return nil, "", fmt.Errorf("unsupported public key type: %T", pub)
 	}
 }
 
 func retriveCertificateRegistrationDispatcherForECDSAFamily(
 	masterCert *x509.Certificate,
 	slaveCert *x509.Certificate,
-) ([]byte, error) {
+) ([]byte, string, error) {
 	var slavePubKeySizeInBits string
 	switch pub := slaveCert.PublicKey.(type) {
 	case *ecdsa.PublicKey:
 		rawPubKeyData := append(pub.X.Bytes(), pub.Y.Bytes()...)
 		slavePubKeySizeInBits = fmt.Sprintf("%v", len(rawPubKeyData)*8)
 	default:
-		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+		return nil, "", fmt.Errorf("unsupported public key type: %T", pub)
 	}
 
 	switch pub := masterCert.PublicKey.(type) {
 	case *ecdsa.PublicKey:
 		var curveName string
 		switch pub.Curve.Params().Name {
+		case "P-160":
+			curveName = "SECP160R1"
+		case "P-192":
+			curveName = "SECP192R1"
 		case "P-224":
 			curveName = "SECP224R1"
 		case "P-256":
@@ -577,6 +595,10 @@ func retriveCertificateRegistrationDispatcherForECDSAFamily(
 			curveName = "SECP384R1"
 		case "P-521":
 			curveName = "SECP521R1"
+		case "brainpoolP160r1":
+			curveName = "BRAINPOOLP160R1"
+		case "brainpoolP192r1":
+			curveName = "BRAINPOOLP192R1"
 		case "brainpoolP224r1":
 			curveName = "BRAINPOOLP224R1"
 		case "brainpoolP256r1":
@@ -586,7 +608,7 @@ func retriveCertificateRegistrationDispatcherForECDSAFamily(
 		case "brainpoolP512r1":
 			curveName = "BRAINPOOLP512R1"
 		default:
-			return nil, fmt.Errorf("unsupported curve: %v", pub.Curve.Params().Name)
+			return nil, "", fmt.Errorf("unsupported curve: %v", pub.Curve.Params().Name)
 		}
 
 		var dispatcherName string
@@ -600,11 +622,11 @@ func retriveCertificateRegistrationDispatcherForECDSAFamily(
 		case x509.ECDSAWithSHA512:
 			dispatcherName = "C_ECDSA_" + curveName + "_SHA512_" + slavePubKeySizeInBits
 		default:
-			return nil, fmt.Errorf("unsupported certificate signature algorithm: %v", slaveCert.SignatureAlgorithm.String())
+			return nil, "", fmt.Errorf("unsupported certificate signature algorithm: %v", slaveCert.SignatureAlgorithm.String())
 		}
 
-		return keccak256.Hash([]byte(dispatcherName)), nil
+		return keccak256.Hash([]byte(dispatcherName)), dispatcherName, nil
 	default:
-		return nil, fmt.Errorf("unsupported public key type: %T", pub)
+		return nil, "", fmt.Errorf("unsupported public key type: %T", pub)
 	}
 }

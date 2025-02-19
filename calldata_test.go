@@ -51,12 +51,12 @@ func TestBuildRegisterCertificate(t *testing.T) {
 
 	calldataBuilder := &identity.CallDataBuilder{}
 
-	calldata, err := calldataBuilder.BuildRegisterCertificateCalldata(mastersPem, slavePem)
+	registerCertificateCalldataResponse, err := calldataBuilder.BuildRegisterCertificateCalldata(mastersPem, slavePem)
 	if err != nil {
 		t.Errorf("failed to build calldata: %v", err)
 	}
 
-	fmt.Printf("calldata: %v\n", hex.EncodeToString(calldata))
+	fmt.Printf("calldata: %v\n", hex.EncodeToString(registerCertificateCalldataResponse.Calldata))
 }
 
 func TestRevokeCalldata(t *testing.T) {
