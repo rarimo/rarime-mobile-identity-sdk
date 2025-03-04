@@ -1,8 +1,6 @@
 module github.com/rarimo/rarime-mobile-identity-sdk
 
-go 1.22.0
-
-toolchain go1.22.3
+go 1.22.8
 
 require (
 	cosmossdk.io/errors v1.0.1
