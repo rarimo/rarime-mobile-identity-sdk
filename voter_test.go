@@ -7,7 +7,6 @@ import (
 )
 
 func TestVoter(t *testing.T) {
-	print("TestVoter")
 	rpc_url := "https://rpc.qtestnet.org"
 	proposalsStateContractAddress := "0xf4B99A3891D0a64A0bc3bB8642242E6A01e104e2"
 
@@ -24,4 +23,29 @@ func TestVoter(t *testing.T) {
 	}
 
 	t.Logf("proposalInfo: %v\n", proposalInfo)
+}
+
+func TestEventDataCalc(t *testing.T) {
+	voteRes := []identity.VoteResult{}
+	voteRes = append(voteRes, identity.VoteResult{
+		QuestionIndex: 0,
+		AnswerIndex:   0,
+	})
+	voteRes = append(voteRes, identity.VoteResult{
+		QuestionIndex: 1,
+		AnswerIndex:   1,
+	})
+
+	voteResJson, err := json.Marshal(voteRes)
+	if err != nil {
+		t.Errorf("Failed to marshal voteRes to JSON: %v", err)
+		return
+	}
+
+	eventData, err := identity.CalculateVotingEventData(voteResJson)
+	if err != nil {
+		t.Errorf("CalculateVotingEventData() failed: %v", err)
+	}
+
+	t.Logf("eventData: %v\n", eventData)
 }
