@@ -8,10 +8,46 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rarimo/ldif-sdk/ldif"
 	identity "github.com/rarimo/rarime-mobile-identity-sdk"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestAggregate3(t *testing.T) {
+	calldataHex := "bc903cb80000000000000000000000000000000000000000000000000000000000000009"
+	calldata2Hex := "bc903cb80000000000000000000000000000000000000000000000000000000000000008"
+
+	calldata, _ := hex.DecodeString(calldataHex)
+	calldata2, _ := hex.DecodeString(calldata2Hex)
+
+	target := common.HexToAddress("0xd23c6062f38eab3186b56b24d9cfcfb4fe034699")
+
+	calls := []identity.Call3{
+		{
+			Target:       &target,
+			AllowFailure: true,
+			CallData:     calldata,
+		},
+		{
+			Target:       &target,
+			AllowFailure: true,
+			CallData:     calldata2,
+		},
+	}
+
+	callsJson, err := json.Marshal(calls)
+	if err != nil {
+		t.Error(err)
+	}
+
+	aggregated, err := identity.CalculateAggregate3Calldata(callsJson)
+	if err != nil {
+		t.Error(err)
+	}
+
+	t.Logf("Aggregated: %v", hex.EncodeToString(aggregated))
+}
 
 func TestLightSignatureWithPubSignals(t *testing.T) {
 	privateKey := "18cadcf91ee2bd025ed4581a87906911631faba366b9e61e1c70f80d89f75de6"

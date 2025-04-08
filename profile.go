@@ -11,10 +11,12 @@ import (
 
 	"cosmossdk.io/errors"
 	"github.com/decred/dcrd/bech32"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
 	"github.com/rarimo/zkp-iden3-exposer/client"
 	"github.com/rarimo/zkp-iden3-exposer/wallet"
+	"golang.org/x/crypto/sha3"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
@@ -37,6 +39,27 @@ type Profile struct {
 	secretKey *babyjub.PrivKeyScalar
 	publicKey *babyjub.PublicKey
 	wallet    *wallet.Wallet
+}
+
+type PollResult struct {
+	QuestionIndex int `json:"questionIndex"`
+	AnswerIndex   int `json:"answerIndex,omitempty"`
+}
+
+type ProposalRules struct {
+	CitizenshipWhitelist                []*big.Int `json:"citizenshipWhitelist"`
+	IdentityCreationTimestampUpperBound *big.Int   `json:"identityCreationTimestampUpperBound"`
+	IdentityCounterUpperBound           *big.Int   `json:"identityCounterUpperBound"`
+	BirthDateUpperbound                 *big.Int   `json:"birthDateUpperbound"`
+	ExpirationDateLowerBound            *big.Int   `json:"expirationDateLowerBound"`
+}
+
+func makeByteWithBits(n int) byte {
+	if n < 0 || n > 8 {
+		panic("n must be between 0 and 8")
+	}
+
+	return byte((1 << n))
 }
 
 // NewProfile creates a new profile.
@@ -169,6 +192,36 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 	}
 
 	return json, nil
+}
+
+// TransformVote transforms the vote.
+func TransformVote(vote []PollResult) ([]byte, error) {
+	uint256Type, _ := abi.NewType("uint256[]", "", nil)
+
+	args := abi.Arguments{
+		{
+			Type: uint256Type,
+		},
+	}
+
+	var values []*big.Int
+	for _, v := range vote {
+		value := makeByteWithBits(v.AnswerIndex)
+
+		values = append(values, big.NewInt(int64(value)))
+	}
+
+	packedVote, err := args.Pack(values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to pack vote: %v", err)
+	}
+
+	hash := sha3.NewLegacyKeccak256()
+	hash.Write(packedVote)
+	hashBytes := hash.Sum(nil)
+	uint248Bytes := hashBytes[1:32]
+
+	return uint248Bytes, nil
 }
 
 // BuildQueryIdentityInputs builds the inputs for the queryIdentity circuit
@@ -332,4 +385,14 @@ func (p *Profile) CalculateEventNullifierInt(eventID string) (string, error) {
 	}
 
 	return eventNullifier.String(), nil
+}
+
+// CalculateVotingEventData calculates the voting event data.
+func (p *Profile) CalculateVotingEventData(voteJson []byte) ([]byte, error) {
+	var pollResults []PollResult
+	if err := json.Unmarshal(voteJson, &pollResults); err != nil {
+		return nil, fmt.Errorf("error unmarshalling vote: %v", err)
+	}
+
+	return TransformVote(pollResults)
 }
