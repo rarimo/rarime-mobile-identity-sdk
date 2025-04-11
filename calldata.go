@@ -7,13 +7,14 @@ import (
 	"math/big"
 	"strings"
 
+	"encoding/json"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/iden3/go-iden3-crypto/keccak256"
 	"github.com/rarimo/certificate-transparency-go/x509"
 	"github.com/rarimo/ldif-sdk/mt"
-	"encoding/json"
 )
 
 // ECMaxSizeInBits represents the maximum size in bits for an encapsulated content
@@ -661,6 +662,7 @@ func (s *CallDataBuilder) BuildVoteCalldata(
 	proposalID int64,
 	pollResultsJSON []byte,
 	citizenship string,
+	isReissuedAfterVoting bool,
 ) ([]byte, error) {
 	zkProof := new(ZkProof)
 	if err := json.Unmarshal(queryZkProofJSON, zkProof); err != nil {
