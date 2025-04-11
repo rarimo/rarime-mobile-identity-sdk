@@ -710,7 +710,7 @@ func (s *CallDataBuilder) BuildVoteCalldata(
 	}
 
 	var identityCreationTimestamp = new(big.Int).SetInt64(0)
-	if isReissuedAfterVoting {
+	if isRegisteredAfterVoting {
 		identityCreationTimestamp, ok = new(big.Int).SetString(zkProof.PubSignals[15], 10)
 		if !ok {
 			return nil, fmt.Errorf("error setting identityCreationTimestamp: %v", zkProof.PubSignals[15])
