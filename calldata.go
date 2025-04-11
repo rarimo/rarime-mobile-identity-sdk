@@ -662,7 +662,7 @@ func (s *CallDataBuilder) BuildVoteCalldata(
 	proposalID int64,
 	pollResultsJSON []byte,
 	citizenship string,
-	isReissuedAfterVoting bool,
+	isRegisteredAfterVoting bool,
 ) ([]byte, error) {
 	zkProof := new(ZkProof)
 	if err := json.Unmarshal(queryZkProofJSON, zkProof); err != nil {
