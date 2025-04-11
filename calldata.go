@@ -709,9 +709,12 @@ func (s *CallDataBuilder) BuildVoteCalldata(
 		return nil, fmt.Errorf("error setting nullifier: %v", zkProof.PubSignals[0])
 	}
 
-	identityCreationTimestamp, ok := new(big.Int).SetString(zkProof.PubSignals[15], 10)
-	if !ok {
-		return nil, fmt.Errorf("error setting identityCreationTimestamp: %v", zkProof.PubSignals[15])
+	var identityCreationTimestamp = new(big.Int).SetInt64(0)
+	if isReissuedAfterVoting {
+		identityCreationTimestamp, ok = new(big.Int).SetString(zkProof.PubSignals[15], 10)
+		if !ok {
+			return nil, fmt.Errorf("error setting identityCreationTimestamp: %v", zkProof.PubSignals[15])
+		}
 	}
 
 	userData := VotingUserData{
