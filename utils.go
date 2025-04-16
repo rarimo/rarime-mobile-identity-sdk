@@ -17,6 +17,8 @@ import (
 
 	asn1Crypto "golang.org/x/crypto/cryptobyte/asn1"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
@@ -28,6 +30,53 @@ import (
 const smartChunking2BlockSize uint64 = 512
 const lowSMaxHex = "54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb"
 const nHex = "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7"
+
+type Call3 struct {
+	Target       *common.Address `json:"target"`
+	AllowFailure bool            `json:"allowFailure"`
+	CallData     []byte          `json:"callData"`
+}
+
+func CalculateAggregate3Calldata(calls3Raw []byte) ([]byte, error) {
+	var call3s []Call3
+	err := json.Unmarshal(calls3Raw, &call3s)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling calls3: %v", err)
+	}
+
+	callsType, _ := abi.NewType("tuple[]", "struct Multicall3.Call3[]", []abi.ArgumentMarshaling{
+		{
+			Name: "target",
+			Type: "address",
+		},
+		{
+			Name: "allowFailure",
+			Type: "bool",
+		},
+		{
+			Name: "callData",
+			Type: "bytes",
+		},
+	})
+
+	args := abi.Arguments{
+		{
+			Type: callsType,
+		},
+	}
+
+	selectorBytes, err := hex.DecodeString("82ad56cb")
+	if err != nil {
+		return nil, fmt.Errorf("error decoding selector: %v", err)
+	}
+
+	call3sBytes, err := args.Pack(call3s)
+	if err != nil {
+		return nil, fmt.Errorf("error packing call3s: %v", err)
+	}
+
+	return append(selectorBytes, call3sBytes...), nil
+}
 
 // SignPubSignalsWithSecp256k1 signs a public signals using a private key string (hex format) and the secp256k1 curve.
 func SignPubSignalsWithSecp256k1(privateKey string, pubSignalsJSON []byte) (string, error) {

@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"strings"
 
+	"encoding/json"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -27,6 +29,11 @@ const ZKNoirTypePrefix = "Z_NOIR_PASSPORT"
 // RegistrationMetaData contains all metadata for the Registration contract.
 var RegistrationMetaData = &bind.MetaData{
 	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"AddressEmptyCode\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"ERC1967InvalidImplementation\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ERC1967NonPayable\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FailedCall\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FailedToCallVerifyProof\",\"type\":\"error\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint256[2]\",\"name\":\"a\",\"type\":\"uint256[2]\"},{\"internalType\":\"uint256[2][2]\",\"name\":\"b\",\"type\":\"uint256[2][2]\"},{\"internalType\":\"uint256[2]\",\"name\":\"c\",\"type\":\"uint256[2]\"}],\"internalType\":\"structGroth16VerifierHelper.ProofPoints\",\"name\":\"proof\",\"type\":\"tuple\"},{\"internalType\":\"uint256[]\",\"name\":\"pubSignals\",\"type\":\"uint256[]\"}],\"name\":\"InvalidCircomProof\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidInitialization\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"proof\",\"type\":\"bytes\"},{\"internalType\":\"bytes32[]\",\"name\":\"pubSignals\",\"type\":\"bytes32[]\"}],\"name\":\"InvalidNoirProof\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotInitializing\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UUPSUnauthorizedCallContext\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"slot\",\"type\":\"bytes32\"}],\"name\":\"UUPSUnsupportedProxiableUUID\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"version\",\"type\":\"uint64\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"P_NO_AA\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"UPGRADE_INTERFACE_VERSION\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"stateKeeper_\",\"type\":\"address\"}],\"name\":\"__Registration_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"certificateDispatchers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"implementation\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"passportDispatchers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"passportVerifiers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proxiableUUID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificatesRoot_\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dgCommit_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"zkType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"passportHash\",\"type\":\"bytes32\"}],\"internalType\":\"structRegistration2.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256[2]\",\"name\":\"a\",\"type\":\"uint256[2]\"},{\"internalType\":\"uint256[2][2]\",\"name\":\"b\",\"type\":\"uint256[2][2]\"},{\"internalType\":\"uint256[2]\",\"name\":\"c\",\"type\":\"uint256[2]\"}],\"internalType\":\"structGroth16VerifierHelper.ProofPoints\",\"name\":\"zkPoints_\",\"type\":\"tuple\"}],\"name\":\"register\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signedAttributes\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"keyOffset\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"expirationOffset\",\"type\":\"uint256\"}],\"internalType\":\"structRegistration2.Certificate\",\"name\":\"certificate_\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"internalType\":\"structRegistration2.ICAOMember\",\"name\":\"icaoMember_\",\"type\":\"tuple\"},{\"internalType\":\"bytes32[]\",\"name\":\"icaoMerkleProof_\",\"type\":\"bytes32[]\"}],\"name\":\"registerCertificate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificatesRoot_\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dgCommit_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"zkType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"passportHash\",\"type\":\"bytes32\"}],\"internalType\":\"structRegistration2.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"zkPoints_\",\"type\":\"bytes\"}],\"name\":\"registerViaNoir\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificatesRoot_\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dgCommit_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"zkType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"passportHash\",\"type\":\"bytes32\"}],\"internalType\":\"structRegistration2.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint256[2]\",\"name\":\"a\",\"type\":\"uint256[2]\"},{\"internalType\":\"uint256[2][2]\",\"name\":\"b\",\"type\":\"uint256[2][2]\"},{\"internalType\":\"uint256[2]\",\"name\":\"c\",\"type\":\"uint256[2]\"}],\"internalType\":\"structGroth16VerifierHelper.ProofPoints\",\"name\":\"zkPoints_\",\"type\":\"tuple\"}],\"name\":\"reissueIdentity\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificatesRoot_\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dgCommit_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"zkType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"passportHash\",\"type\":\"bytes32\"}],\"internalType\":\"structRegistration2.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"zkPoints_\",\"type\":\"bytes\"}],\"name\":\"reissueIdentityViaNoir\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"identityKey_\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"dataType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"zkType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"passportHash\",\"type\":\"bytes32\"}],\"internalType\":\"structRegistration2.Passport\",\"name\":\"passport_\",\"type\":\"tuple\"}],\"name\":\"revoke\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"certificateKey_\",\"type\":\"bytes32\"}],\"name\":\"revokeCertificate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stateKeeper\",\"outputs\":[{\"internalType\":\"contractStateKeeper\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"enumRegistration2.MethodId\",\"name\":\"methodId_\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"data_\",\"type\":\"bytes\"}],\"name\":\"updateDependency\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"upgradeToAndCall\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"}]",
+}
+
+// VotingMetaData contains all metadata for the Voting contract.
+var VotingMetaData = &bind.MetaData{
+	ABI: "[{\"anonymous\": false, \"inputs\": [{\"indexed\": false, \"internalType\": \"address\", \"name\": \"previousAdmin\", \"type\": \"address\"}, {\"indexed\": false, \"internalType\": \"address\", \"name\": \"newAdmin\", \"type\": \"address\"}], \"name\": \"AdminChanged\", \"type\": \"event\"}, {\"anonymous\": false, \"inputs\": [{\"indexed\": true, \"internalType\": \"address\", \"name\": \"beacon\", \"type\": \"address\"}], \"name\": \"BeaconUpgraded\", \"type\": \"event\"}, {\"anonymous\": false, \"inputs\": [{\"indexed\": false, \"internalType\": \"uint8\", \"name\": \"version\", \"type\": \"uint8\"}], \"name\": \"Initialized\", \"type\": \"event\"}, {\"anonymous\": false, \"inputs\": [{\"indexed\": true, \"internalType\": \"address\", \"name\": \"previousOwner\", \"type\": \"address\"}, {\"indexed\": true, \"internalType\": \"address\", \"name\": \"newOwner\", \"type\": \"address\"}], \"name\": \"OwnershipTransferred\", \"type\": \"event\"}, {\"anonymous\": false, \"inputs\": [{\"indexed\": true, \"internalType\": \"address\", \"name\": \"implementation\", \"type\": \"address\"}], \"name\": \"Upgraded\", \"type\": \"event\"}, {\"inputs\": [], \"name\": \"IDENTITY_LIMIT\", \"outputs\": [{\"internalType\": \"uint256\", \"name\": \"\", \"type\": \"uint256\"}], \"stateMutability\": \"view\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"PROOF_SIGNALS_COUNT\", \"outputs\": [{\"internalType\": \"uint256\", \"name\": \"\", \"type\": \"uint256\"}], \"stateMutability\": \"view\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"SELECTOR\", \"outputs\": [{\"internalType\": \"uint256\", \"name\": \"\", \"type\": \"uint256\"}], \"stateMutability\": \"view\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"ZERO_DATE\", \"outputs\": [{\"internalType\": \"uint256\", \"name\": \"\", \"type\": \"uint256\"}], \"stateMutability\": \"view\", \"type\": \"function\"}, {\"inputs\": [{\"internalType\": \"address\", \"name\": \"registrationSMT_\", \"type\": \"address\"}, {\"internalType\": \"address\", \"name\": \"proposalsState_\", \"type\": \"address\"}, {\"internalType\": \"address\", \"name\": \"votingVerifier_\", \"type\": \"address\"}], \"name\": \"__BioPassportVoting_init\", \"outputs\": [], \"stateMutability\": \"nonpayable\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"implementation\", \"outputs\": [{\"internalType\": \"address\", \"name\": \"\", \"type\": \"address\"}], \"stateMutability\": \"view\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"owner\", \"outputs\": [{\"internalType\": \"address\", \"name\": \"\", \"type\": \"address\"}], \"stateMutability\": \"view\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"proposalsState\", \"outputs\": [{\"internalType\": \"address\", \"name\": \"\", \"type\": \"address\"}], \"stateMutability\": \"view\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"proxiableUUID\", \"outputs\": [{\"internalType\": \"bytes32\", \"name\": \"\", \"type\": \"bytes32\"}], \"stateMutability\": \"view\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"registrationSMT\", \"outputs\": [{\"internalType\": \"address\", \"name\": \"\", \"type\": \"address\"}], \"stateMutability\": \"view\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"renounceOwnership\", \"outputs\": [], \"stateMutability\": \"nonpayable\", \"type\": \"function\"}, {\"inputs\": [{\"internalType\": \"address\", \"name\": \"newOwner\", \"type\": \"address\"}], \"name\": \"transferOwnership\", \"outputs\": [], \"stateMutability\": \"nonpayable\", \"type\": \"function\"}, {\"inputs\": [{\"internalType\": \"address\", \"name\": \"newImplementation\", \"type\": \"address\"}], \"name\": \"upgradeTo\", \"outputs\": [], \"stateMutability\": \"nonpayable\", \"type\": \"function\"}, {\"inputs\": [{\"internalType\": \"address\", \"name\": \"newImplementation\", \"type\": \"address\"}, {\"internalType\": \"bytes\", \"name\": \"data\", \"type\": \"bytes\"}], \"name\": \"upgradeToAndCall\", \"outputs\": [], \"stateMutability\": \"payable\", \"type\": \"function\"}, {\"inputs\": [{\"internalType\": \"bytes32\", \"name\": \"registrationRoot_\", \"type\": \"bytes32\"}, {\"internalType\": \"uint256\", \"name\": \"currentDate_\", \"type\": \"uint256\"}, {\"internalType\": \"uint256\", \"name\": \"proposalId_\", \"type\": \"uint256\"}, {\"internalType\": \"uint256[]\", \"name\": \"vote_\", \"type\": \"uint256[]\"}, {\"components\": [{\"internalType\": \"uint256\", \"name\": \"nullifier\", \"type\": \"uint256\"}, {\"internalType\": \"uint256\", \"name\": \"citizenship\", \"type\": \"uint256\"}, {\"internalType\": \"uint256\", \"name\": \"identityCreationTimestamp\", \"type\": \"uint256\"}], \"internalType\": \"struct BaseVoting.UserData\", \"name\": \"userData_\", \"type\": \"tuple\"}, {\"components\": [{\"internalType\": \"uint256[2]\", \"name\": \"a\", \"type\": \"uint256[2]\"}, {\"internalType\": \"uint256[2][2]\", \"name\": \"b\", \"type\": \"uint256[2][2]\"}, {\"internalType\": \"uint256[2]\", \"name\": \"c\", \"type\": \"uint256[2]\"}], \"internalType\": \"struct VerifierHelper.ProofPoints\", \"name\": \"zkPoints_\", \"type\": \"tuple\"}], \"name\": \"vote\", \"outputs\": [], \"stateMutability\": \"nonpayable\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"votingVerifier\", \"outputs\": [{\"internalType\": \"address\", \"name\": \"\", \"type\": \"address\"}], \"stateMutability\": \"view\", \"type\": \"function\"}]",
 }
 
 // RegistrationSimplePassport is an auto generated low-level Go binding around an user-defined struct.
@@ -102,6 +109,13 @@ type RegisterCalldataResult struct {
 	DispatcherName string
 }
 
+// VotingUserData is an auto generated low-level Go binding around an user-defined struct.
+type VotingUserData struct {
+	Nullifier                 *big.Int
+	Citizenship               *big.Int
+	IdentityCreationTimestamp *big.Int
+}
+
 func newRegistrationCoder() (*abi.ABI, error) {
 	parsed, err := RegistrationMetaData.GetAbi()
 	if err != nil {
@@ -113,6 +127,15 @@ func newRegistrationCoder() (*abi.ABI, error) {
 
 func newRegistrationSimpleCoder() (*abi.ABI, error) {
 	parsed, err := RegistrationSimpleMetaData.GetAbi()
+	if err != nil {
+		return nil, err
+	}
+
+	return parsed, nil
+}
+
+func newVotingCoder() (*abi.ABI, error) {
+	parsed, err := VotingMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
@@ -724,4 +747,107 @@ func newNoirRegistrationProof(fullProof []byte) (*noirRegistrationProof, error) 
 	proof.certificatesRoot = new(big.Int).SetBytes(pubSignalsPart[128:160])
 
 	return &proof, nil
+}
+
+// BuildVoteCalldata builds the calldata for the vote function.
+//
+// Vote(registrationRoot_ [32]byte, currentDate_ *big.Int, proposalId_ *big.Int, vote_ []*big.Int, userData_ VotingUserData, zkPoints_ VerifierHelperProofPoints) (*types.Transaction, error) {
+func (s *CallDataBuilder) BuildVoteCalldata(
+	queryZkProofJSON []byte,
+	proposalID int64,
+	pollResultsJSON []byte,
+	citizenship string,
+	isRegisteredAfterVoting bool,
+) ([]byte, error) {
+	zkProof := new(ZkProof)
+	if err := json.Unmarshal(queryZkProofJSON, zkProof); err != nil {
+		return nil, err
+	}
+
+	var a [2]*big.Int
+	for index, val := range zkProof.Proof.A[:2] {
+		aI, ok := new(big.Int).SetString(val, 10)
+		if !ok {
+			return nil, fmt.Errorf("error setting a[%d]: %v", index, val)
+		}
+
+		a[index] = aI
+	}
+
+	var b [2][2]*big.Int
+	for index, val := range zkProof.Proof.B[:2] {
+		for index2, val2 := range val[:2] {
+			bI, ok := new(big.Int).SetString(val2, 10)
+			if !ok {
+				return nil, fmt.Errorf("error setting b[%d][%d]: %v", index, index2, val2)
+			}
+
+			b[index][index2] = bI
+		}
+	}
+
+	b[0][0], b[0][1] = b[0][1], b[0][0]
+	b[1][0], b[1][1] = b[1][1], b[1][0]
+
+	var c [2]*big.Int
+	for index, val := range zkProof.Proof.C[:2] {
+		cI, ok := new(big.Int).SetString(val, 10)
+		if !ok {
+			return nil, fmt.Errorf("error setting c[%d]: %v", index, val)
+		}
+
+		c[index] = cI
+	}
+
+	nullifier, ok := new(big.Int).SetString(zkProof.PubSignals[0], 10)
+	if !ok {
+		return nil, fmt.Errorf("error setting nullifier: %v", zkProof.PubSignals[0])
+	}
+
+	var identityCreationTimestamp = new(big.Int).SetInt64(0)
+	if isRegisteredAfterVoting {
+		identityCreationTimestamp, ok = new(big.Int).SetString(zkProof.PubSignals[15], 10)
+		if !ok {
+			return nil, fmt.Errorf("error setting identityCreationTimestamp: %v", zkProof.PubSignals[15])
+		}
+	}
+
+	userData := VotingUserData{
+		Nullifier:                 nullifier,
+		Citizenship:               new(big.Int).SetBytes([]byte(citizenship)),
+		IdentityCreationTimestamp: identityCreationTimestamp,
+	}
+
+	var pollResults []PollResult
+	if err := json.Unmarshal(pollResultsJSON, &pollResults); err != nil {
+		return nil, err
+	}
+
+	var vote []*big.Int
+	for _, v := range pollResults {
+		voteI := makeByteWithBits(v.AnswerIndex)
+
+		vote = append(vote, big.NewInt(int64(voteI)))
+	}
+
+	registrationRootRaw, ok := new(big.Int).SetString(zkProof.PubSignals[11], 10)
+	if !ok {
+		return nil, fmt.Errorf("error setting registrationRoot: %v", zkProof.PubSignals[11])
+	}
+
+	currentDate := zkProof.PubSignals[13]
+	currentDateBigUInt, ok := new(big.Int).SetString(currentDate, 10)
+	if !ok {
+		return nil, fmt.Errorf("error setting currentDate: %v", currentDate)
+	}
+
+	var registrationRoot [32]byte
+	copy(registrationRoot[:], registrationRootRaw.Bytes())
+
+	abi, err := newVotingCoder()
+	if err != nil {
+		return nil, err
+	}
+
+	return abi.Pack("vote", registrationRoot, currentDateBigUInt, big.NewInt(proposalID), vote, userData, VerifierHelperProofPoints{A: a, B: b, C: c})
 }
