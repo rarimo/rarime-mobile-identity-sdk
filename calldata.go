@@ -873,12 +873,12 @@ func (s *CallDataBuilder) BuildFaceRegistryRegisterUser(zkPointsJSON []byte) ([]
 
 	userAddress, ok := new(big.Int).SetString(zkProof.PubSignals[2], 10)
 	if !ok {
-		return nil, fmt.Errorf("error setting userAddress: %v", zkProof.PubSignals[0])
+		return nil, fmt.Errorf("error setting userAddress: %v", zkProof.PubSignals[2])
 	}
 
 	featureHash, ok := new(big.Int).SetString(zkProof.PubSignals[0], 10)
 	if !ok {
-		return nil, fmt.Errorf("error setting featureHash: %v", zkProof.PubSignals[1])
+		return nil, fmt.Errorf("error setting featureHash: %v", zkProof.PubSignals[0])
 	}
 
 	abi, err := newFaceRegistryCoder()
