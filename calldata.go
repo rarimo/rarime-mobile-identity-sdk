@@ -7,13 +7,14 @@ import (
 	"math/big"
 	"strings"
 
+	"encoding/json"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/iden3/go-iden3-crypto/keccak256"
 	"github.com/rarimo/certificate-transparency-go/x509"
 	"github.com/rarimo/ldif-sdk/mt"
-	"encoding/json"
 )
 
 // ECMaxSizeInBits represents the maximum size in bits for an encapsulated content
@@ -661,6 +662,7 @@ func (s *CallDataBuilder) BuildVoteCalldata(
 	proposalID int64,
 	pollResultsJSON []byte,
 	citizenship string,
+	isRegisteredAfterVoting bool,
 ) ([]byte, error) {
 	zkProof := new(ZkProof)
 	if err := json.Unmarshal(queryZkProofJSON, zkProof); err != nil {
@@ -707,9 +709,12 @@ func (s *CallDataBuilder) BuildVoteCalldata(
 		return nil, fmt.Errorf("error setting nullifier: %v", zkProof.PubSignals[0])
 	}
 
-	identityCreationTimestamp, ok := new(big.Int).SetString(zkProof.PubSignals[15], 10)
-	if !ok {
-		return nil, fmt.Errorf("error setting identityCreationTimestamp: %v", zkProof.PubSignals[15])
+	var identityCreationTimestamp = new(big.Int).SetInt64(0)
+	if isRegisteredAfterVoting {
+		identityCreationTimestamp, ok = new(big.Int).SetString(zkProof.PubSignals[15], 10)
+		if !ok {
+			return nil, fmt.Errorf("error setting identityCreationTimestamp: %v", zkProof.PubSignals[15])
+		}
 	}
 
 	userData := VotingUserData{

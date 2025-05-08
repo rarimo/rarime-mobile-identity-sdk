@@ -396,3 +396,58 @@ func (p *Profile) CalculateVotingEventData(voteJson []byte) ([]byte, error) {
 
 	return TransformVote(pollResults)
 }
+
+func (p *Profile) DecodeABIProposalRules(raw []byte) ([]byte, error) {
+	rulesTyp, _ := abi.NewType("tuple", "struct ProposalRules", []abi.ArgumentMarshaling{
+		{
+			Name: "selector",
+			Type: "uint256",
+		},
+		{
+			Name: "citizenshipWhitelist",
+			Type: "uint256[]",
+		},
+		{
+			Name: "identityCreationTimestampUpperBound",
+			Type: "uint256",
+		},
+		{
+			Name: "identityCounterUpperBound",
+			Type: "uint256",
+		},
+		{
+			Name: "sex",
+			Type: "uint256",
+		},
+		{
+			Name: "birthDateLowerbound",
+			Type: "uint256",
+		},
+		{
+			Name: "birthDateUpperbound",
+			Type: "uint256",
+		},
+		{
+			Name: "expirationDateLowerBound",
+			Type: "uint256",
+		},
+	})
+
+	args := abi.Arguments{
+		{
+			Type: rulesTyp,
+		},
+	}
+
+	values, err := args.Unpack(raw)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unpack proposal rules: %v", err)
+	}
+
+	valuesJSON, err := json.Marshal(values[0])
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal proposal rules: %v", err)
+	}
+
+	return valuesJSON, nil
+}
