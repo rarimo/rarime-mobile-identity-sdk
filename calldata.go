@@ -889,9 +889,29 @@ func (s *CallDataBuilder) BuildFaceRegistryRegisterUser(zkPointsJSON []byte) ([]
 	return abi.Pack("registerUser", userAddress, featureHash, proofPoints)
 }
 
-// UpdateRule is a paid mutator transaction binding the contract method 0x3e62651b.
-//
-// Solidity: function updateRule(uint256 userAddress_, uint256 newState_, (uint256[2],uint256[2][2],uint256[2]) zkPoints_) returns()
-// func (_FaceRegistry *FaceRegistrySession) UpdateRule(userAddress_ *big.Int, newState_ *big.Int, zkPoints_ Groth16VerifierHelperProofPoints) (*types.Transaction, error) {
-// 	return _FaceRegistry.Contract.UpdateRule(&_FaceRegistry.TransactOpts, userAddress_, newState_, zkPoints_)
-// }
+func (s *CallDataBuilder) BuildFaceRegistryUpdateRule(
+	newState string,
+	zkPointsJSON []byte,
+) ([]byte, error) {
+	zkProof, proofPoints, err := prepareZKProofForEVMVerification(zkPointsJSON)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare zk proof for evm verification: %v", err)
+	}
+
+	userAddress, ok := new(big.Int).SetString(zkProof.PubSignals[0], 10)
+	if !ok {
+		return nil, fmt.Errorf("error setting userAddress: %v", zkProof.PubSignals[0])
+	}
+
+	newStateInt, ok := new(big.Int).SetString(newState, 10)
+	if !ok {
+		return nil, fmt.Errorf("error setting newState: %v", newState)
+	}
+
+	abi, err := newFaceRegistryCoder()
+	if err != nil {
+		return nil, err
+	}
+
+	return abi.Pack("updateRule", userAddress, newStateInt, proofPoints)
+}
