@@ -235,6 +235,7 @@ func (s *CallDataBuilder) BuildRegisterCalldata(
 	return abi.Pack(methodName, certificatesRoot, pkIdentityHash, dg1Commitment, passport, proofPoints)
 }
 
+// BuildNoirRegisterCalldata builds the calldata for the noir register function.
 func (s *CallDataBuilder) BuildNoirRegisterCalldata(
 	fullProof []byte,
 	aaSignature []byte,

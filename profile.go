@@ -1,7 +1,6 @@
 package identity
 
 import (
-	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -9,21 +8,11 @@ import (
 	"strconv"
 	"time"
 
-	"cosmossdk.io/errors"
-	"github.com/decred/dcrd/bech32"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/iden3/go-iden3-crypto/babyjub"
 	"github.com/iden3/go-iden3-crypto/poseidon"
-	"github.com/rarimo/zkp-iden3-exposer/client"
-	"github.com/rarimo/zkp-iden3-exposer/wallet"
 	"golang.org/x/crypto/sha3"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/keepalive"
 )
-
-// AddressPrefix represents the cosmos address prefix.
-const AddressPrefix = "rarimo"
 
 // IcaoMerkleRoot represents the ICAO merkle root.
 var IcaoMerkleRoot, _ = new(big.Int).SetString("2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45", 16)
@@ -38,28 +27,6 @@ var IcaoMerkleInclusionOrder = []string{"0", "0", "0", "0", "0", "0", "0", "0", 
 type Profile struct {
 	secretKey *babyjub.PrivKeyScalar
 	publicKey *babyjub.PublicKey
-	wallet    *wallet.Wallet
-}
-
-type PollResult struct {
-	QuestionIndex int `json:"questionIndex"`
-	AnswerIndex   int `json:"answerIndex,omitempty"`
-}
-
-type ProposalRules struct {
-	CitizenshipWhitelist                []*big.Int `json:"citizenshipWhitelist"`
-	IdentityCreationTimestampUpperBound *big.Int   `json:"identityCreationTimestampUpperBound"`
-	IdentityCounterUpperBound           *big.Int   `json:"identityCounterUpperBound"`
-	BirthDateUpperbound                 *big.Int   `json:"birthDateUpperbound"`
-	ExpirationDateLowerBound            *big.Int   `json:"expirationDateLowerBound"`
-}
-
-func makeByteWithBits(n int) byte {
-	if n < 0 || n > 8 {
-		panic("n must be between 0 and 8")
-	}
-
-	return byte((1 << n))
 }
 
 // NewProfile creates a new profile.
@@ -68,15 +35,9 @@ func (p *Profile) NewProfile(secretKey []byte) (*Profile, error) {
 
 	secretKeyScalar := babyjub.NewPrivKeyScalar(secretKeyInt)
 
-	wallet, err := wallet.NewWallet(hex.EncodeToString(secretKeyInt.Bytes()), AddressPrefix)
-	if err != nil {
-		return nil, fmt.Errorf("error creating wallet: %v", err)
-	}
-
 	return &Profile{
 		secretKey: secretKeyScalar,
 		publicKey: secretKeyScalar.Public(),
-		wallet:    wallet,
 	}, nil
 }
 
@@ -98,11 +59,6 @@ func (p *Profile) GetPublicKeyHash() ([]byte, error) {
 	}
 
 	return publicKeyHash.Bytes(), nil
-}
-
-// GetRarimoAddress returns the Rarimo cosmos address
-func (p *Profile) GetRarimoAddress() string {
-	return p.wallet.Address
 }
 
 // BuildAirdropQueryIdentityInputs builds the inputs for the queryIdentity circuit.
@@ -127,13 +83,6 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 	for _, sibling := range smtProof.Siblings {
 		idStateSiblings = append(idStateSiblings, new(big.Int).SetBytes(sibling).String())
 	}
-
-	_, decodedAddress, err := bech32.Decode(p.wallet.Address)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding address: %v", err)
-	}
-
-	decodedAddressInt := new(big.Int).SetBytes(decodedAddress)
 
 	issueTimestampInt, err := strconv.ParseInt(issueTimestamp, 10, 64)
 	if err != nil {
@@ -166,7 +115,7 @@ func (p *Profile) BuildAirdropQueryIdentityInputs(
 	inputs := &QueryIdentityInputs{
 		Dg1:                       ByteArrayToBits(dg1),
 		EventID:                   eventID,
-		EventData:                 decodedAddressInt.String(),
+		EventData:                 "0",
 		IDStateRoot:               idStateRoot,
 		IDStateSiblings:           idStateSiblings,
 		PkPassportHash:            pkPassportHash,
@@ -290,56 +239,6 @@ func (p *Profile) BuildQueryIdentityInputs(
 	return json, nil
 }
 
-// WalletSend sends tokens to desrination via Cosmos
-func (p *Profile) WalletSend(toAddr string, amount string, chainID string, denom string, rpcIP string) ([]byte, error) {
-	chainConfig := client.ChainConfig{
-		ChainId:     chainID,
-		Denom:       denom,
-		MinGasPrice: 0,
-		GasLimit:    uint64(1_000_000),
-	}
-
-	grpcClient, err := grpc.Dial(
-		rpcIP,
-		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
-			MinVersion: tls.VersionTLS13,
-		})),
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:    10 * time.Second, // wait time before ping if no activity
-			Timeout: 20 * time.Second, // ping timeout
-		}),
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error dialing grpc")
-	}
-
-	rarimoClient, err := client.NewClient(
-		grpcClient,
-		chainConfig,
-		*p.wallet,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error creating client")
-	}
-
-	sendAmount, err := strconv.ParseInt(amount, 10, 64)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse amount: ")
-	}
-
-	txResp, err := rarimoClient.Send(
-		p.wallet.Address,
-		toAddr,
-		sendAmount,
-		denom,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error sending tx")
-	}
-
-	return txResp, nil
-}
-
 // calculateEventNullifier calculates the event nullifier.
 func (p *Profile) calculateEventNullifier(eventID string) (*big.Int, error) {
 	secretKey := p.secretKey.BigInt()
@@ -388,11 +287,26 @@ func (p *Profile) CalculateEventNullifierInt(eventID string) (string, error) {
 }
 
 // CalculateVotingEventData calculates the voting event data.
-func (p *Profile) CalculateVotingEventData(voteJson []byte) ([]byte, error) {
+func (p *Profile) CalculateVotingEventData(voteJSON []byte) ([]byte, error) {
 	var pollResults []PollResult
-	if err := json.Unmarshal(voteJson, &pollResults); err != nil {
+	if err := json.Unmarshal(voteJSON, &pollResults); err != nil {
 		return nil, fmt.Errorf("error unmarshalling vote: %v", err)
 	}
 
 	return TransformVote(pollResults)
+}
+
+// PollResult represents a poll result.
+type PollResult struct {
+	QuestionIndex int `json:"questionIndex"`
+	AnswerIndex   int `json:"answerIndex,omitempty"`
+}
+
+// ProposalRules represents the proposal rules.
+type ProposalRules struct {
+	CitizenshipWhitelist                []*big.Int `json:"citizenshipWhitelist"`
+	IdentityCreationTimestampUpperBound *big.Int   `json:"identityCreationTimestampUpperBound"`
+	IdentityCounterUpperBound           *big.Int   `json:"identityCounterUpperBound"`
+	BirthDateUpperbound                 *big.Int   `json:"birthDateUpperbound"`
+	ExpirationDateLowerBound            *big.Int   `json:"expirationDateLowerBound"`
 }

@@ -31,12 +31,14 @@ const smartChunking2BlockSize uint64 = 512
 const lowSMaxHex = "54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb"
 const nHex = "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7"
 
+// Call3 represents a call to be made in the aggregate3 function.
 type Call3 struct {
 	Target       *common.Address `json:"target"`
 	AllowFailure bool            `json:"allowFailure"`
 	CallData     []byte          `json:"callData"`
 }
 
+// CalculateAggregate3Calldata calculates the aggregate3 calldata for the given calls3Raw.
 func CalculateAggregate3Calldata(calls3Raw []byte) ([]byte, error) {
 	var call3s []Call3
 	err := json.Unmarshal(calls3Raw, &call3s)
@@ -278,6 +280,7 @@ func BigIntToBytes(x string) ([]byte, error) {
 	return bigInt.Bytes(), nil
 }
 
+// Hash512P512 is used to hash the 512 bits AA public key
 func Hash512P512(key []byte) (*big.Int, error) {
 	if len(key) != 128 {
 		return nil, fmt.Errorf("key is not 128 bytes long, got %d", len(key))
@@ -558,4 +561,12 @@ func IsBrainpoolPublicKey(pubKeyPem []byte) bool {
 	default:
 		return false
 	}
+}
+
+func makeByteWithBits(n int) byte {
+	if n < 0 || n > 8 {
+		panic("n must be between 0 and 8")
+	}
+
+	return byte((1 << n))
 }
