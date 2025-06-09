@@ -628,6 +628,9 @@ func retriveCertificateRegistrationDispatcherForRSAFamily(
 	switch pub := slaveCert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		slavePubKeySizeInBits = fmt.Sprintf("%v", len(pub.N.Bytes())*8)
+	case *ecdsa.PublicKey:
+		rawPubKeyData := append(pub.X.Bytes(), pub.Y.Bytes()...)
+		slavePubKeySizeInBits = fmt.Sprintf("%v", len(rawPubKeyData)*8)
 	default:
 		return nil, "", fmt.Errorf("unsupported public key type: %T", pub)
 	}
@@ -669,6 +672,8 @@ func retriveCertificateRegistrationDispatcherForECDSAFamily(
 	case *ecdsa.PublicKey:
 		rawPubKeyData := append(pub.X.Bytes(), pub.Y.Bytes()...)
 		slavePubKeySizeInBits = fmt.Sprintf("%v", len(rawPubKeyData)*8)
+	case *rsa.PublicKey:
+		slavePubKeySizeInBits = fmt.Sprintf("%v", len(pub.N.Bytes())*8)
 	default:
 		return nil, "", fmt.Errorf("unsupported public key type: %T", pub)
 	}
