@@ -433,7 +433,19 @@ func parseECDSASignature(sig []byte) (r, s []byte, err error) {
 		!inner.Empty() {
 		return nil, nil, errors.New("invalid ASN.1")
 	}
-	return r, s, nil
+
+	maxLen := len(r)
+	if len(s) > maxLen {
+		maxLen = len(s)
+	}
+
+	resR := make([]byte, maxLen)
+	resS := make([]byte, maxLen)
+
+	copy(resR[maxLen-len(r):], r)
+	copy(resS[maxLen-len(s):], s)
+
+	return resR, resS, nil
 }
 
 // CalculateHmacMessage calculates the HMAC message.
