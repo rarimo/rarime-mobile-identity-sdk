@@ -5,11 +5,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"math/big"
 	"strconv"
 	"time"
 
-	"cosmossdk.io/errors"
 	"github.com/decred/dcrd/bech32"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/iden3/go-iden3-crypto/babyjub"
