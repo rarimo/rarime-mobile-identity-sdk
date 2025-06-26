@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"math/big"
+	"strconv"
 	"strings"
 
 	"encoding/json"
@@ -19,6 +20,9 @@ import (
 
 // ECMaxSizeInBits represents the maximum size in bits for an encapsulated content
 const ECMaxSizeInBits = 2688
+
+// defaultRsaExp is needed to check master key Exp, if is not equal then add to dispatcher name
+const defaultRsaExp = 65537
 
 // ZKTypePrefix represerts the circuit zk type prefix
 const ZKTypePrefix = "Z_PER_PASSPORT"
@@ -681,6 +685,10 @@ func retriveCertificateRegistrationDispatcherForRSAFamily(
 			dispatcherName = "C_RSAPSS_SHA512_" + slavePubKeySizeInBits
 		default:
 			return nil, "", fmt.Errorf("unsupported certificate signature algorithm: %v", slaveCert.SignatureAlgorithm.String())
+		}
+		// ask KyrylR or solidity guys
+		if pub.E != defaultRsaExp {
+			dispatcherName += "_" + strconv.FormatInt(int64(pub.E), 10)
 		}
 
 		return keccak256.Hash([]byte(dispatcherName)), dispatcherName, nil
