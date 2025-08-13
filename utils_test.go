@@ -125,6 +125,21 @@ func TestHashKey(t *testing.T) {
 	t.Log(result.Text(10))
 }
 
+const (
+	rpcURL            = "https://rpc.evm.node1.mainnet-beta.rarimo.com" // Replace with your Infura project ID or your node URL
+	multicallAddress  = "0xBf0aA27C429cd9C3a061BaD7C197bC63DA18f51B"    // Replace with your Multicall contract address
+	proposalStateAddr = "0xD23C6062f38Eab3186B56b24d9cFCfb4Fe034699"    // Replace with your ProposalState contract address
+)
+
+func TestMulticall(t *testing.T) {
+	res, err := identity.GetStateInfosMulticall(proposalStateAddr, rpcURL, multicallAddress, "1", "10")
+
+	if err != nil {
+		t.Fatalf("Error during Multicall %v", err)
+	}
+	t.Log(string(res[:]))
+}
+
 func TestLdif(t *testing.T) {
 	value, err := ldif.FromFile("assets/ldif.ldif")
 	if err != nil {
